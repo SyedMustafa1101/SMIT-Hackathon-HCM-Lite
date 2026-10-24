@@ -84,7 +84,7 @@ const { chromium } = require(process.env.HCM_PLAYWRIGHT_MODULE || 'playwright');
     await page.locator('#attendanceEmployee').selectOption(ids[1]); await page.getByRole('button', { name: 'Apply attendance filters', exact: true }).click();
     assert.equal(await page.locator('#attendance-rows tr').count(), 2); await text(page, '#attendance-rows', /2026-10-23/); assert.ok(!(await page.locator('#attendance-rows').innerText()).includes('First'));
     await page.locator('#attendanceEmployee').selectOption(''); await page.getByRole('button', { name: 'Apply attendance filters', exact: true }).click(); assert.equal(await page.locator('#attendance-rows tr').count(), 7);
-    assert.equal(await page.locator('#attendance-rows img').count(), 0); await text(page, '#attendance-overview', /not leave-aware/);
+    assert.equal(await page.locator('#attendance-rows img').count(), 0); await text(page, '#attendance-overview', /excludes today and approved leave/);
     pass('Admin combined employee/date filters and all records; correct absence/joining/weekend/today/future boundaries');
 
     await login(page, 'first'); await setTime(page, '2026-10-24T23:00:00+05:00'); await page.reload();

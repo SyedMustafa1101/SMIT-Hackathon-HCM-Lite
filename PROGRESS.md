@@ -1,6 +1,69 @@
 # Progress and handoff
 
-## Current handoff: Phase 2 — complete, paused for user review/commit/push
+## Current handoff: Phase 3 — complete, paused for user review/manual commit/push
+
+Completed on 2026-10-25 under the attached request to implement Leave Management only. Inspected AGENTS.md, PLAN.md, this file, README.md, existing code/tests and all four physical pages of the original PDF (text extraction plus rendered-page inspection). Existing Phase 1–2 implementation and module boundaries were extended. No commit, push, deployment, submission, framework, application backend, extra storage key, seeded app data, payroll, announcement/helper feature, illustration or premium redesign was added. Exactly seven page paths remain.
+
+### Phase 3 changed files and behavior
+
+- Added `js/leaves.js`: reusable role-scoped request/preview/list/yearly balance, inclusive current working-day counts, range/joining/year/overlap/quota rules, pending reservations across all three types, Admin prepare/review with current count and snapshot token, immutable finalized decisions, real pending/approved-today summaries and retained-deleted-ID filter options. Every mutation re-resolves the current account. No stored aggregate totals.
+- Extended `js/storage.js`: exact leave record fields, valid same-year ordered calendar dates, positive plausible day count, type/status, required reason, canonical submission/review timestamps, required reviewer/comment for finalized records and unique IDs. Existing empty arrays work; unfamiliar/malformed data blocks editing and is never migrated/erased.
+- Extended `js/hcm.js`: composes leave service and scopes `getState().leaves` to Admin all / Employee own / anonymous none; local dates consistently pad four-digit years. Existing account/settings/session APIs preserved.
+- Extended `js/attendance.js`: uses the existing absence-exclusion hook for approved leave, derives approved-leave rows through today and adds summary counts. Actual attendance wins, so no duplicate row or overwritten attendance; pending/rejected leave does not excuse absence. Existing check-in/out/lateness/duration/overnight rules remain intact.
+- Extended `js/pages.js`: Employee request form, inline errors and day preview on `employee.html`, all-year own history with comments/timestamps, selected-year approved balance/pending/available figures; Admin employee/status filters, review panel with saved/current count, comment/decision fields, stale/error handling and immutable final UI on `leaves.html`; real Admin dashboard leave totals. Attendance labels/rows explain approved leave. Failed request/review saves keep entered form text and old data.
+- Updated `index.html` and `pages/admin.html`, `pages/employees.html`, `pages/leaves.html`, `pages/settings.html`, `pages/employee.html`, `pages/payslip.html`: load leave module before domain composition, Phase 3 footer, same seven paths.
+- Updated `css/style.css`: minimal leave table width and action-cell spacing to prevent split Review/Finalized labels; existing responsive visual style preserved. No Phase 6 design work.
+- Updated `tools/serve.cjs`: static allowlist includes leave script; still development-only static preview.
+- Added `tests/leaves.test.cjs` and `tests/leaves-browser.cjs`; updated module loaders/inventory in `tests/domain.test.cjs` and `tests/attendance.test.cjs`, and superseded absence wording assertion in `tests/attendance-browser.cjs`. Existing `tests/browser.cjs` unchanged and rerun.
+- Updated `AGENTS.md`, `PLAN.md`, `README.md`, `PROGRESS.md`: decisions, completion checklist, usage/schema, tests, current handoff and corrected stale remaining-work wording.
+
+### Phase 3 policy decisions
+
+These choices supplement the PDF and follow the attached request; permanent details are in AGENTS.md and the walkthrough/schema in README.md.
+
+- Casual/Sick/Other share one calendar-year quota. Pending working days reserve it. Approval must fit all current approved and pending reservations; a quota reduction may require rejecting excess pending requests or adjusting settings first.
+- Count inclusive current configured working dates. Reject zero-day, reversed, before-joining and cross-year ranges; split years. Historical requests are allowed. Pending/approved calendar ranges block overlap; rejected ranges permit replacements. No medical-proof/accrual rules added.
+- Balances use current settings for every saved request, including approvals; show negative balances after settings changes. Saved `days` is an audit snapshot, updated at approval, and differences are explicitly displayed. Settings do not revoke finalized decisions.
+- Review displays current days before approval. Relevant company/employee/leave changes require opening Review again; approval also revalidates employment, joining, working-day count, overlap and quota. Comment is required for approval and rejection; finalized decisions cannot be changed or double-counted. Deleted requests stay identifiable/filterable and can be rejected, never newly approved.
+- Approved leave excuses covered configured working dates on/after current joining date. Actual attendance stays authoritative (late/half-day/open included). Synthetic leave rows extend through today only; future requests remain in leave history. No synthetic history is created for deleted employees. Approved leave is paid/excused for future Phase 4 integration; payroll is not implemented.
+
+### Phase 3 exact verification results
+
+All test data was isolated in memory or disposable browser contexts. No normal browser profile or delivered app source was seeded.
+
+**Automated checks:**
+
+1. `node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs`: **43 passed, 0 failed** (14 foundation + 13 attendance + 16 leave). New coverage: valid/same-day/preview/custom-Sunday/leap-year counts, invalid/reversed/zero-day/pre-joining/cross-year requests, pending/approved overlap and rejected replacement, shared exact/zero/over quota, multiple pending reservations and yearly isolation, approval after quota/working-day/joining/employment/overlap changes, explicit changed-count preparation, stale/repeated/finalized/comment checks, all/own/anonymous/deleted-session scope, current-settings negative balance, approved vs pending/rejected absence, actual late half-day/open attendance coexistence, today/future boundaries, schema/duplicate/JSON preservation, failed request/approval/rejection writes, refresh persistence and backward review clock. Includes maximum supported calendar-year iteration boundary.
+2. `node tests/browser.cjs`: **14 scenarios passed** in installed headless Edge, preserving foundation workflows, passwords, roles/redirects, employee CRUD/filter/search, settings, empty startup, storage errors and mobile regression checks.
+3. `node tests/attendance-browser.cjs`: **10 scenarios passed** in installed Edge with controlled clock and Asia/Karachi timezone, preserving attendance actions, cutoff/duration, filters/scope, overnight/nonworking/joining policies, save failures and phone layouts. Only the now-superseded not-leave-aware text expectation changed.
+4. `node tests/leaves-browser.cjs`: **10 scenarios passed** in installed Edge with controlled clock and isolated Asia/Karachi contexts. Actual UI Employee request → Admin review → Employee status/comment/balance; inline request errors/preview, safe markup text, pending quota, all/own isolation and Admin route guard, employee/status filters and empty states, required review comment, failed approval and request retaining input/data, finalized UI, rejection/replacement, stale settings review, updated count, reduced quota approval blocking, exact/over quota, yearly balance, real pending totals, approved-leave absence and actual open-shift precedence, refresh persistence, 390px forms/tables/review, malformed storage preservation and clean empty first run. No page JavaScript errors.
+5. `node --check` passed for all **13** app/tool/test JavaScript files. Domain inventory verified exactly seven HTML paths and shared module loads. Static preview served the new leave script successfully during browser tests.
+
+Browser invocation (development-only installed package; no app dependency added):
+
+```powershell
+$env:HCM_PLAYWRIGHT_MODULE='C:\Users\ALPHA\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+node tests/browser.cjs
+node tests/attendance-browser.cjs
+node tests/leaves-browser.cjs
+```
+
+**Manual visual inspection:** reviewed generated 1280px Admin desktop and 390px Employee/Admin phone screenshots. Fixed split Admin action labels found in screenshot review, then reran leave browser verification and inspected the updated phone form/review and table screenshots. Forms, current-count notices, inline errors and review actions fit; wide tables use their own horizontal scroll. Screenshots are temporary QA files in the system temp directory (`hcm-phase3-*.png`), not delivered app assets. This was visual inspection of automated captures, not a separate hand-operated end-to-end walkthrough, physical-phone or screen-reader test.
+
+### Phase 3 limits and next step
+
+- No known failing Phase 3 acceptance checks. Browser-only identity/device time remain a learning demonstration. localStorage is origin-specific and cannot provide cross-tab atomic transactions; one editing tab is recommended. A snapshot token detects stale reviews but does not remove that storage limitation.
+- Current working-day/quota/joining edits can alter historical derived figures; negative balances remain visible. Actual attendance and finalized decisions are retained. No background clock refresh, pagination, cancellation/editing of submitted requests or reversal of finalized decisions was added.
+- Verified in installed Edge and emulated 390px phone viewports; other browsers, physical phones and assistive technologies were not manually exercised. Blank attendance filters can generate large reports for old joining dates.
+- Payroll/payslip, announcements/helper, premium UI and final acceptance remain Phases 4, 5, 6 and 7 respectively. Announcement schema stays reserved for its phase. Publishing/LMS/repository delivery remains user-controlled.
+
+**Pause for the user's Phase 3 review and manual commit/push. Next only after authorization: Phase 4 payroll/payslips, using the PDF formula, approved paid/excused leave, all/own scope and print/Save as PDF. Do not start it automatically.**
+
+Suggested commit message: `feat: implement leave management with quota reservations and attendance integration`
+
+---
+
+## Phase 2 — historical completion record (superseded by Phase 3 above)
 
 Completed on 2026-10-24. Phase 2 was explicitly authorized by the user. Phase 1 implementation was extended, not restarted. The workspace still contains the user's untracked app files; no automatic staging, commit, push, deployment or submission occurred. No Phase 3 workflow or illustration/bonus was implemented.
 
@@ -53,18 +116,18 @@ Phases 1–5 keep their numbers. Phase 6 is now explicitly dedicated to premium 
 
 **Manual inspection:** visually inspected generated 1280px Admin desktop and 390px Employee/Admin phone screenshots. Readable shared styling, labels/filters/actions, safe rendered employee text, open/derived distinctions and contained horizontal attendance tables. This was screenshot inspection, not a separate hand-operated end-to-end walkthrough or physical-phone test.
 
-### Current known issues and limits
+### Phase 2 limits at that historical handoff
 
 - No known failing Phase 2 acceptance checks. Browser-only authentication and client device clock remain learning-only and tamperable; there is no trusted time source. localStorage is origin/browser-specific and not transactional across tabs; use one editing tab.
-- Attendance is not leave-aware; Phase 3 must connect approved-leave exclusions and test them. Payroll/helper/announcements are not implemented. No invented current-day absence or finalized open-shift duration.
+- At Phase 2, attendance was not leave-aware. Phase 3 now connects and tests approved-leave exclusions. Payroll/helper/announcements remain unimplemented. No invented current-day absence or finalized open-shift duration.
 - Use Refresh attendance/reload after date/time changes to refresh displayed action availability and summaries. There is no live clock/background timer. Overnight records are attributed to their starting date; long elapsed shifts do not grant automatic multi-day credit.
 - Historical absence uses current working-day/joining settings and current accounts; deleted records remain actual history only. Blank date filters may create a large report for very old joining dates; no pagination added in this milestone.
-- Strict attendance schema deliberately blocks unfamiliar nonempty shapes instead of guessing a migration. Back up/repair data explicitly. Leave/announcement per-record schemas remain for their respective phases.
+- Strict attendance schema deliberately blocks unfamiliar nonempty shapes instead of guessing a migration. Back up/repair data explicitly. Phase 3 now adds strict leave validation; announcement schema remains for Phase 5.
 - Verified with installed Edge and emulated 390px viewport, not all browsers, physical mobile devices or hand-operated screen-reader testing.
 
-### Exact next step
+### Historical next step after Phase 2 (superseded)
 
-**Pause for the user's Phase 2 review, manual commit and GitHub push. Do not begin Phase 3 until the user asks.**
+The Phase 2 stop was subsequently superseded by the user's Phase 3 authorization. The current Phase 3 handoff above now governs continuation.
 
 Suggested commit message: `feat: add role-scoped attendance tracking and summaries`
 
@@ -94,7 +157,7 @@ Phase 1 was completed and verified on 2026-10-24. At that historical handoff Pha
 - Every protected page checks session against current user records. Employees redirect from all four Admin pages; Admin redirects from Employee-only dashboard. Stale/deleted sessions cannot grant access. Storage events and browser-back restoration recheck access; focus also rechecks the guard.
 - Admin employee add/edit/delete (native confirmation including cancel path), name/email search plus department filtering, empty/no-match states. Employee creation provides working login. Edit preserves ID/password and updates login email; deletion disables login. Name/email/department/salary/joining date validation and field-level errors included.
 - Company settings edit/save with validation and persistence, including working days and allowed zero grace/quota.
-- Employee sees own profile. Attendance, leave, payslip, announcements and helper pages/sections clearly identify their later phase. No fabricated dashboard metrics, fake actions, payroll calculations or print claims.
+- At Phase 1, Employee saw their profile and later-workflow placeholders. Attendance and leave are now complete as recorded above. Payslip, announcements and helper still identify their later phases; no fabricated payroll/print claims.
 - README covers running a static preview, using the app, verification, storage keys, learning-only browser authentication, data recovery and the handoff boundary. Static preview tool has no application API/backend or database.
 
 ## Verification results
@@ -118,17 +181,17 @@ All checks below passed. Test records existed only in in-memory storage or dispo
 - Browser-only authentication is a learning demonstration, not suitable for real HR data; localStorage can be edited by the browser owner. Data is browser/origin-specific. Password recovery and production security are outside this brief.
 - localStorage cannot make cross-tab transactions atomic. Use one editing tab; a change in another tab re-renders and may discard unsaved input. Setup writes attempt rollback on write failures and report incomplete rollback explicitly if necessary.
 - Verified on desktop Edge and emulated phone viewport, not physical phones or every browser. Web Crypto requires localhost or HTTPS. No runtime dependency installation was needed for the application.
-- At Phase 1, attendance/leave/announcement collections were checked as arrays of objects. Phase 2 has now added strict attendance validation; leave/announcement validation remains for later phases. Do not auto-migrate or silently reset unfamiliar existing records.
-- Later-phase policy edges not explicit in the PDF (for example, approved-leave treatment in absence/payroll, cross-year leave, partial joining months and unfinished/current-day attendance) must be resolved when implementing those phases and recorded before calculations are presented. They do not block this account/settings milestone.
+- At Phase 1, attendance/leave/announcement collections were checked as arrays of objects. Phases 2–3 now add strict attendance/leave validation; announcement validation remains for Phase 5. Do not auto-migrate or silently reset unfamiliar existing records.
+- Attendance/leave policy edges are now recorded in AGENTS.md, including open-shift and cross-year/paid-leave rules. Remaining payroll-specific edges (such as partial joining months or months without configured working days) must be resolved in Phase 4 before presenting salary calculations.
 
 ## Remaining mandatory work
 
-The unchecked items in PLAN.md are the source checklist. Remaining: attendance/check-in/out and all/own access with exact late/half-day/absence rules; leave requests/approval comments/quota/balance/date/working-day/overlap rules; real company/personal dashboard summaries; monthly payslip formula plus all/own access and print/Save as PDF; Admin announcements/Employee reading; both keyword-helper chats with role-scoped real answers; final integration audit. Hosting/repository links and LMS submission remain the user's eventual responsibility, outside this session.
+The unchecked items in PLAN.md are the source checklist. Attendance, leave and their real company/personal summaries are complete. Remaining: monthly payslip formula with all/own access and print/Save as PDF; Admin announcements/Employee reading; both keyword-helper chats with role-scoped real answers; Phase 6 premium UI and Phase 7 final integration acceptance. Hosting/repository links and LMS submission remain the user's eventual responsibility, outside this session.
 
 ## Historical next step after Phase 1 (superseded)
 
-The user subsequently authorized Phase 2; the current Phase 2 handoff above now governs continuation.
+The user subsequently authorized Phases 2–3; the current Phase 3 handoff above now governs continuation.
 
 Suggested commit message: `feat: implement phase 1 HCM setup, auth, employees and settings`
 
-The original Phase 1 handoff pointed to attendance. Phase 2 extended that work and is recorded above; remaining work now starts at Phase 3 only after authorization.
+The original Phase 1 handoff pointed to attendance. Phases 2–3 are now complete; remaining work starts at Phase 4 only after authorization.

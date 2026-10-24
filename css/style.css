@@ -60,6 +60,8 @@ th { background: #f4f7f5; color: #425b4c; }
 td { overflow-wrap: anywhere; max-width: 240px; }
 td .actions { margin: 0; flex-wrap: nowrap; }
 td button { padding: .35rem .65rem; font-size: .88rem; }
+#leave-history table { min-width: 1000px; }
+.leave-actions { min-width: 100px; white-space: nowrap; }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .tag { padding: .2rem .55rem; background: #edf2ee; border-radius: .3rem; color: #52665d; font-size: .8rem; white-space: nowrap; }
 dl { display: grid; grid-template-columns: minmax(100px, 1fr) 2fr; gap: .5rem 1rem; }

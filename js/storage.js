@@ -35,6 +35,17 @@
     if (!timestamp(a.checkOut) || !Number.isSafeInteger(a.durationMs) || a.durationMs < 0 || a.durationMs !== Date.parse(a.checkOut) - Date.parse(a.checkIn)) return false;
     return a.status === (a.durationMs < 5 * 3600000 ? 'Half day' : a.isLate ? 'Late' : 'Present');
   }
+  function validLeave(l) {
+    const fields = ['id', 'employeeId', 'type', 'from', 'to', 'days', 'reason', 'status', 'comment', 'requestedAt', 'reviewedAt', 'reviewedBy'];
+    if (!record(l) || Object.keys(l).length !== fields.length || !fields.every(k => Object.hasOwn(l, k)) ||
+      !nonempty(l.id) || !nonempty(l.employeeId) || !['Casual', 'Sick', 'Other'].includes(l.type) ||
+      !date(l.from) || !date(l.to) || l.from > l.to || l.from.slice(0, 4) !== l.to.slice(0, 4) ||
+      !Number.isInteger(l.days) || l.days < 1 || l.days > 366 || !nonempty(l.reason) || !timestamp(l.requestedAt)) return false;
+    const elapsedDays = Math.round((Date.parse(`${l.to}T12:00:00Z`) - Date.parse(`${l.from}T12:00:00Z`)) / 86400000) + 1;
+    if (l.days > elapsedDays) return false;
+    if (l.status === 'Pending') return l.comment === '' && l.reviewedAt === null && l.reviewedBy === null;
+    return ['Approved', 'Rejected'].includes(l.status) && nonempty(l.comment) && nonempty(l.reviewedBy) && timestamp(l.reviewedAt) && l.reviewedAt >= l.requestedAt;
+  }
   function valid(name, value) {
     if (name === 'company') return validCompany(value);
     if (name === 'users') return Array.isArray(value) && value.every(validUser) &&
@@ -44,6 +55,7 @@
       new Set(value.map(a => a.id)).size === value.length &&
       new Set(value.map(a => JSON.stringify([a.employeeId, a.date]))).size === value.length &&
       new Set(value.filter(a => a.checkOut === null).map(a => a.employeeId)).size === value.filter(a => a.checkOut === null).length;
+    if (name === 'leaves') return Array.isArray(value) && value.every(validLeave) && new Set(value.map(l => l.id)).size === value.length;
     return Array.isArray(value) && value.every(record);
   }
   function create(adapter) {

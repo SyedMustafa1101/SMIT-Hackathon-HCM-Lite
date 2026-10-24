@@ -1,7 +1,7 @@
 /* Attendance rules and scope. No DOM, page events, seeded data or persistence side effects at load. */
 (function (root) {
   'use strict';
-  const dayString = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const dayString = d => `${String(d.getFullYear()).padStart(4, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const calendar = value => { const [y, m, d] = value.split('-').map(Number); return new Date(y, m - 1, d, 12); };
   function deriveAbsences({ employees, attendance, workingDays, from, to, today, isExcluded = () => false }) {
     const occupied = new Set(attendance.map(a => JSON.stringify([a.employeeId, a.date]))), result = [];
@@ -67,10 +67,15 @@
     function report(filters = {}) {
       const { state, records, employees } = scoped(filters), today = dayString(now());
       const actual = records.filter(a => (!filters.from || a.date >= filters.from) && (!filters.to || a.date <= filters.to));
-      const absent = deriveAbsences({ employees, attendance: records, workingDays: state.company.workingDays, from: filters.from, to: filters.to, today });
+      const isExcluded = (employeeId, date) => root.HCMLeaves.covers(state.leaves, employeeId, date, state.company.workingDays);
+      const absent = deriveAbsences({ employees, attendance: records, workingDays: state.company.workingDays, from: filters.from, to: filters.to, today, isExcluded });
+      // Use the same elapsed-day boundary as absence, but allow today for an approved leave row.
+      // Actual attendance always wins; no persisted or duplicate daily row is created.
+      const tomorrow = calendar(today); tomorrow.setDate(tomorrow.getDate() + 1);
+      const approved = deriveAbsences({ employees, attendance: records, workingDays: state.company.workingDays, from: filters.from, to: filters.to, today: dayString(tomorrow), isExcluded: (id, date) => !isExcluded(id, date) }).map(a => ({ ...a, id: `leave:${a.employeeId}:${a.date}`, status: 'Approved leave' }));
       const names = new Map(employees.map(u => [u.id, u.name]));
-      const rows = [...actual, ...absent].map(a => ({ ...a, employeeName: names.get(a.employeeId) || `Deleted employee (${a.employeeId})` })).sort((a, b) => b.date.localeCompare(a.date) || a.employeeName.localeCompare(b.employeeName));
-      return { rows, summary: { records: actual.length, open: actual.filter(a => a.checkOut === null).length, completed: actual.filter(a => a.checkOut !== null).length, late: actual.filter(a => a.isLate).length, halfDays: actual.filter(a => a.status === 'Half day').length, absent: absent.length, durationMs: actual.reduce((sum, a) => sum + (a.durationMs || 0), 0) } };
+      const rows = [...actual, ...absent, ...approved].map(a => ({ ...a, employeeName: names.get(a.employeeId) || `Deleted employee (${a.employeeId})` })).sort((a, b) => b.date.localeCompare(a.date) || a.employeeName.localeCompare(b.employeeName));
+      return { rows, summary: { records: actual.length, open: actual.filter(a => a.checkOut === null).length, completed: actual.filter(a => a.checkOut !== null).length, late: actual.filter(a => a.isLate).length, halfDays: actual.filter(a => a.status === 'Half day').length, absent: absent.length, approvedLeave: approved.length, durationMs: actual.reduce((sum, a) => sum + (a.durationMs || 0), 0) } };
     }
     function overview() {
       const user = requireRole(), time = now(), today = dayString(time), month = `${today.slice(0, 7)}-01`;

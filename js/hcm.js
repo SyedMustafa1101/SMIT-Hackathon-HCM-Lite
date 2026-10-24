@@ -9,7 +9,7 @@
   const hex = bytes => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   const unhex = value => Uint8Array.from(value.match(/../g), byte => parseInt(byte, 16));
   function localDate(now = new Date()) {
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return `${String(now.getFullYear()).padStart(4, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
   function secureCrypto() {
     if (!root.crypto || !root.crypto.subtle) throw new Error('Password protection requires a modern browser on localhost or HTTPS. Open the app through the local server described in README.md.');
@@ -149,12 +149,15 @@
       requireRole(['Admin']); check(companyFields(input));
       storage.write({ company: companyValue(input, storage.state().company.id) });
     }
+    const leaves = root.HCMLeaves.create(storage, requireRole, { clock, makeId: id });
     const attendance = root.HCMAttendance.create(storage, requireRole, { clock, makeId: id });
     function getState() {
       const state = storage.state(), user = currentUser();
-      return { ...state, attendance: user?.role === 'Admin' ? state.attendance : user ? state.attendance.filter(a => a.employeeId === user.id) : [] };
+      return { ...state,
+        attendance: user?.role === 'Admin' ? state.attendance : user ? state.attendance.filter(a => a.employeeId === user.id) : [],
+        leaves: user?.role === 'Admin' ? state.leaves : user ? state.leaves.filter(l => l.employeeId === user.id) : [] };
     }
-    return Object.freeze({ currentUser, route, setup, login, logout, changePassword, addEmployee, editEmployee, deleteEmployee, employees, saveSettings, attendance, getState });
+    return Object.freeze({ currentUser, route, setup, login, logout, changePassword, addEmployee, editEmployee, deleteEmployee, employees, saveSettings, attendance, leaves, getState });
   }
   root.HCM = Object.freeze({ create, ValidationError, localDate });
 })(globalThis);

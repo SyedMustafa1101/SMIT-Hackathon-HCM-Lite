@@ -12,7 +12,7 @@ function memory() {
 }
 function context(adapter = memory()) {
   const sandbox = vm.createContext({ crypto: webcrypto, TextEncoder, Date });
-  for (const file of ['storage.js', 'attendance.js', 'hcm.js']) vm.runInContext(fs.readFileSync(path.join(root, 'js', file), 'utf8'), sandbox);
+  for (const file of ['storage.js', 'attendance.js', 'leaves.js', 'hcm.js']) vm.runInContext(fs.readFileSync(path.join(root, 'js', file), 'utf8'), sandbox);
   const storage = sandbox.HCMStorage.create(adapter), app = sandbox.HCM.create(storage);
   return { sandbox, storage, app, adapter, fresh: () => sandbox.HCM.create(sandbox.HCMStorage.create(adapter)) };
 }
@@ -166,7 +166,7 @@ test('exactly seven HTML files; every page loads shared storage/domain/UI/guards
   assert.deepEqual(actual, ['index.html', 'pages/admin.html', 'pages/employee.html', 'pages/employees.html', 'pages/leaves.html', 'pages/payslip.html', 'pages/settings.html']);
   for (const file of actual) {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
-    for (const script of ['storage.js', 'attendance.js', 'hcm.js', 'ui.js', 'pages.js']) assert.ok(source.includes(script), `${file} loads ${script}`);
+    for (const script of ['storage.js', 'attendance.js', 'leaves.js', 'hcm.js', 'ui.js', 'pages.js']) assert.ok(source.includes(script), `${file} loads ${script}`);
     assert.ok(source.includes('name="viewport"')); assert.ok(source.includes('data-page='));
   }
 });
