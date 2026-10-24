@@ -4,6 +4,7 @@
   const keys = Object.freeze({ company: 'hcm_company', users: 'hcm_users', attendance: 'hcm_attendance', leaves: 'hcm_leaves', session: 'hcm_session', announcements: 'hcm_announcements' });
   class StorageError extends Error {}
   const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const exact = (value, fields) => record(value) && Object.keys(value).length === fields.length && fields.every(k => Object.hasOwn(value, k));
   const nonempty = value => typeof value === 'string' && value.trim().length > 0;
   const date = value => {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -12,14 +13,15 @@
     return parsed.getFullYear() === y && parsed.getMonth() === m - 1 && parsed.getDate() === d;
   };
   function validCompany(c) {
-    return record(c) && nonempty(c.id) && nonempty(c.name) && /^([01]\d|2[0-3]):[0-5]\d$/.test(c.officeStart) &&
+    return exact(c, ['id', 'name', 'officeStart', 'graceMinutes', 'yearlyLeaveQuota', 'workingDays']) && nonempty(c.id) && nonempty(c.name) && /^([01]\d|2[0-3]):[0-5]\d$/.test(c.officeStart) &&
       Number.isInteger(c.graceMinutes) && c.graceMinutes >= 0 && c.graceMinutes <= 1440 &&
       Number.isInteger(c.yearlyLeaveQuota) && c.yearlyLeaveQuota >= 0 && c.yearlyLeaveQuota <= 366 &&
       Array.isArray(c.workingDays) && c.workingDays.length > 0 && new Set(c.workingDays).size === c.workingDays.length && c.workingDays.every(d => Number.isInteger(d) && d >= 0 && d <= 6);
   }
   function validUser(u) {
-    return record(u) && nonempty(u.id) && nonempty(u.name) && typeof u.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u.email) &&
-      ['Admin', 'Employee'].includes(u.role) && record(u.password) && u.password.algorithm === 'PBKDF2-SHA256' &&
+    const fields = ['id', 'name', 'email', 'role', 'password', ...(u?.role === 'Employee' ? ['department', 'monthlySalary', 'joiningDate'] : [])];
+    return exact(u, fields) && nonempty(u.id) && nonempty(u.name) && typeof u.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u.email) &&
+      ['Admin', 'Employee'].includes(u.role) && exact(u.password, ['algorithm', 'iterations', 'salt', 'hash']) && u.password.algorithm === 'PBKDF2-SHA256' &&
       u.password.iterations === 100000 && /^[a-f0-9]{32}$/.test(u.password.salt) && /^[a-f0-9]{64}$/.test(u.password.hash) &&
       (u.role === 'Admin' || (nonempty(u.department) && Number.isFinite(u.monthlySalary) && u.monthlySalary > 0 && date(u.joiningDate)));
   }

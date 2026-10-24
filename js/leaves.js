@@ -117,7 +117,7 @@
     }
     function overview() {
       const { records, state } = scoped(), today = root.HCM.localDate(clock());
-      return { pending: records.filter(l => l.status === 'Pending').length, approvedToday: new Set(records.filter(l => covers([l], l.employeeId, today, state.company.workingDays) && state.users.some(u => u.id === l.employeeId && u.role === 'Employee')).map(l => l.employeeId)).size };
+      return { pending: records.filter(l => l.status === 'Pending').length, approvedToday: new Set(records.filter(l => covers([l], l.employeeId, today, state.company.workingDays) && state.users.some(u => u.id === l.employeeId && u.role === 'Employee' && u.joiningDate <= today)).map(l => l.employeeId)).size };
     }
     function employeeOptions() {
       requireRole(['Admin']); const { state } = scoped();

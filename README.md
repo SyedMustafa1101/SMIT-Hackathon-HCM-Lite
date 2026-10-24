@@ -1,6 +1,14 @@
-# Saylani HCM Lite — Phases 1–6
+# Saylani HCM Lite
 
 Plain HTML, CSS and JavaScript; browser localStorage only. No app dependencies, framework, backend, external API, or demo data. Seven HTML pages, as specified. The Node tool below is an optional static file preview, not an application backend. Any ordinary static host can serve the same files unchanged.
+
+A small HR learning app for company administration and employee self-service: accounts, employee directory, attendance, leave, payslips, announcements and a keyword helper answering from saved activity.
+
+**Phase 7 local acceptance passed on 2026-10-25. Submission remains pending.** See [ACCEPTANCE.md](ACCEPTANCE.md) for the PDF requirement-to-evidence checklist and [PROGRESS.md](PROGRESS.md) for results, the audit fix and Git evidence. The Phase 6 design is preserved.
+
+- Repository (remote verified): [SyedMustafa1101/SMIT-Hackathon-HCM-Lite](https://github.com/SyedMustafa1101/SMIT-Hackathon-HCM-Lite).
+- Hosted link: **pending verification**. No live URL was confirmed; do not treat the local preview as a submitted hosted site.
+- LMS submission: **pending user action** after final push and live-site verification.
 
 ## Run locally
 
@@ -12,7 +20,7 @@ node tools/serve.cjs
 
 Open **http://127.0.0.1:4173** in a modern browser. Keep the same host and port to keep using the same localStorage. Password hashing requires Web Crypto, available on localhost or HTTPS. Avoid opening pages directly with `file://`, where browser storage behavior differs. There is no build step. Stop the preview with Ctrl+C.
 
-## Use Phase 1
+## First-run setup and accounts
 
 1. On an empty browser origin, enter company name, start time, grace minutes, yearly leave quota and working days. Create your Admin account with a password of at least eight characters. No data is preloaded and working days are not preselected.
 2. Sign in as Admin. Open Employees and add name, email, initial password, department, positive monthly salary and joining date. Give the employee their credentials yourself. The app does not send messages or emails.
@@ -23,7 +31,7 @@ Open **http://127.0.0.1:4173** in a modern browser. Keep the same host and port 
 
 Use data you enter yourself for a walkthrough: setup → Admin sign in → employee creation → settings change → logout → Employee sign in → own password change → logout. No tutorial account or seeded records are included.
 
-## Use Phase 2 — Attendance
+## Attendance
 
 - Employee dashboard: use **Check in** and **Check out** for your own attendance. An open shift reads **Checked in**, with no completed duration. Check-in is available on/after joining, once per local calendar date. Checkout requires an open shift and can happen only once. Admin has no personal attendance actions.
 - Admin dashboard shows current Employee count, today's check-ins/open/completed/late/half-day counts and this month's completed hours/elapsed absence. Employees get the same attendance summaries for themselves only. Late counts overlap open/half-day counts because lateness is retained separately.
@@ -47,7 +55,7 @@ Use data you enter yourself for a walkthrough: setup → Admin sign in → emplo
 
 Phase 1's empty attendance array is compatible. Unfamiliar/nonempty older shapes, invalid timestamps, inconsistent statuses/durations and duplicates are rejected with a preservation error, never erased or silently converted. Back up raw data and repair it deliberately. Full/blocked writes retain the old attendance and show an error, without claiming success.
 
-## Use Phase 3 — Leave management
+## Leave management
 
 1. Employee: on **My dashboard**, use **My leave**. Choose Casual, Sick or Other, From/To dates and a reason. The preview counts inclusive configured working days. Submit to save a Pending request. Requests may be same-day or historical, but cannot start before joining, cross a year boundary, contain zero working days or overlap any pending/approved calendar range. Split cross-year leave into one request per year. Rejected requests allow a replacement.
 2. Choose **Balance year** and **Show yearly balance**. All types share the annual quota. Approved balance = quota minus approved working days; Pending days are reserved; Available to request = approved balance minus pending days. Multiple pending requests must fit together. History includes all years, status, submitted/review timestamps and the Admin comment. Employees access only their own leave in both UI and domain APIs.
@@ -63,7 +71,7 @@ These details extend the PDF's simple rules without adding accrual, medical proo
 
 `js/leaves.js` holds reusable leave rules and role scope. `js/hcm.js` composes it, and scopes leaves in `getState()` to Admin all / Employee own / anonymous none. Admin review uses a fresh snapshot token and revalidation to reject stale actions; this does not make browser storage a cross-tab transaction.
 
-## Use Phase 4 — Payroll and payslips
+## Payroll and payslips
 
 1. Open **Payslip** as Admin; choose an existing employee, month and year, then **Calculate / Refresh payslip**. Employee **My payslip** fixes identity to the current account and initially shows the current month. Choose another month/year and calculate. Future months are unavailable. Empty employee lists, invalid periods, unavailable accounts and storage errors show honest messages. Changing selection hides old figures until recalculated. Reload defaults to the current month; it saves no payroll record or selection.
 2. Read the company, employee/department/ID, joining date and period, followed by monthly salary, configured/eligible working days, daily rate, gross entitlement, elapsed absences, completed half-days, approved paid-leave days, deductions and net. Amounts have two decimal places in the company's chosen currency; the app assumes no currency. The displayed rate is rounded only for reading; calculations use full precision.
@@ -83,7 +91,7 @@ These supplement the PDF for cases its simple formula does not specify. No tax, 
 
 `js/payroll.js` provides read-only, role-scoped `employeeOptions()` and `slip({ year, month, employeeId })`, composed by `js/hcm.js`. Employee calls can omit their own ID; another/manipulated ID is rejected. Every call resolves the current user. The service reuses leave calendar/coverage and attendance absence logic, filters eligible working-day records and validates finite totals. It adds no storage keys, totals or snapshots. Viewing/printing never mutate source data. Browser owners can edit local code/storage; this remains learning-only authorization.
 
-## Use Phase 5 — Announcements and keyword smart helper
+## Announcements and keyword smart helper
 
 1. Admin dashboard: under **Announcements**, enter a nonblank title and message, then **Post announcement**. Both dashboards show saved posts newest first with author and local timestamp. **Refresh announcements** or reload to read the latest records. Employees have no posting access, including through the service. There is no edit/delete/targeting/read-receipt feature. Failed saves keep your entered text and old records for retry.
 2. Both dashboards: use the labeled **Your question** field and **Ask helper**, press Enter, or activate a suggested question using keyboard or pointer. The response log keeps question/answer pairs on this page only. Reload/account changes clear history. The helper uses JavaScript keyword patterns and current app data, without an LLM or external API. Unknown, combined, other-role or unsupported questions show the supported questions; ask one at a time.
@@ -111,12 +119,12 @@ This is a browser-only learning demonstration. It cannot protect real HR, payrol
 
 The six keys are `hcm_company`, `hcm_users`, `hcm_attendance`, `hcm_leaves`, `hcm_session`, `hcm_announcements`. Other storage keys are untouched. `js/storage.js` handles persistence/structure checks; `js/hcm.js` handles accounts/settings/access and composes `js/attendance.js`, `js/leaves.js`, `js/payroll.js`, `js/announcements.js` and `js/helper.js`; `js/ui.js` provides shared UI; `js/pages.js` wires page events. Local calendar dates are used for joining/leave dates; IDs use cryptographic random bytes. User text is rendered with DOM `textContent`/`value`. Salary is stored as a positive number in the company's chosen currency (no currency assumption).
 
-Invalid JSON, invalid collection shapes and partial existing setup block editing with a clear error and preserve data. There is deliberately no automatic reset button. If this happens, first copy the raw `hcm_*` values using browser developer tools for a backup, then repair the invalid collection. For a deliberate fresh learning start, after backing up, remove all six `hcm_*` keys from the chosen browser origin yourself and reload. Do not remove only some keys or unrelated site storage. Storage denied/full errors are displayed; failed writes do not report success.
+Invalid JSON, invalid collection shapes and partial existing setup block editing with a clear error and preserve data. Company, role-specific account and password records also reject unfamiliar extra fields so settings/password saves cannot silently discard them. Valid existing app records keep the same schema; nothing is migrated. There is deliberately no automatic reset button. If this happens, first copy the raw `hcm_*` values using browser developer tools for a backup, then repair the invalid collection. For a deliberate fresh learning start, after backing up, remove all six `hcm_*` keys from the chosen browser origin yourself and reload. Do not remove only some keys or unrelated site storage. Storage denied/full errors are displayed; failed writes do not report success.
 
-## Verification and continuation
+## Verification
 
 ```sh
-node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs tests/phase5.test.cjs
+node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs tests/phase5.test.cjs tests/inventory.test.cjs
 ```
 
 The domain suite uses isolated in-memory storage and never writes browser data. Optional browser integration verification uses Playwright as a development-only tool (not shipped to or loaded by the app):
@@ -128,13 +136,30 @@ node tests/leaves-browser.cjs
 node tests/payroll-browser.cjs
 node tests/phase5-browser.cjs
 node tests/phase6-browser.cjs
+node tests/phase7-browser.cjs
 ```
 
 If Playwright is not on Node's module path, set `HCM_PLAYWRIGHT_MODULE` to the absolute directory of an already installed Playwright package. It uses installed Microsoft Edge by default; set `HCM_BROWSER_CHANNEL=chrome` to use an installed Chrome instead. These tools are for verification only; the app runs without them. The browser suite launches a temporary static server and fresh browser contexts, creates its own temporary records and destroys the contexts on completion. It never seeds app source or your normal browser profile.
 
+For this workspace the verified PowerShell setting is:
+
+```powershell
+$env:HCM_PLAYWRIGHT_MODULE='C:\Users\ALPHA\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+```
+
+Syntax/diff verification (PowerShell, from the project folder):
+
+```powershell
+$scripts = Get-ChildItem js,tests,tools -File | Where-Object { $_.Extension -in '.js','.cjs' }
+foreach ($script in $scripts) { node --check $script.FullName; if ($LASTEXITCODE -ne 0) { throw "Syntax error: $($script.Name)" } }
+git diff --check
+```
+
+Final audit: **73 domain tests + 2 inventory tests = 75 passing; 71 browser scenarios** (14 foundation, 10 attendance, 10 leave, 9 payroll, 11 announcements/helper, 10 design, 7 final acceptance); **23 JavaScript syntax checks**. The new journey goes from empty setup through UI-created accounts, attendance, leave review, announcement, all six helper groups, both roles' slips and logout/reload persistence. It uses an independent file-only host under `/SMIT-Hackathon-HCM-Lite/`, exact-case filenames and no preview-server import. It also verifies separate origins start empty and unknown company/account/password fields block UI without rewriting storage. The requirement matrix identifies assertions and expected values rather than relying on totals alone.
+
 Automated checks and manual screenshot inspection are distinguished in PROGRESS.md. Browser tests use installed Edge and an emulated 390px phone viewport, not physical phones. The payroll suite captures temporary final/provisional A4 PDFs and screenshots under the system temp directory. These use headless browser rendering; print invocation is stubbed for verification. The native OS dialog and actual user Save action are untested. All test records are isolated fixtures, not delivered app data.
 
-## Phase 6 — People. Work. In sync.
+## Design and interaction — People. Work. In sync.
 
 The seven existing pages share a light workspace, navy navigation, blue primary actions, green accents and semantic statuses. The desktop sidebar becomes a compact **Menu** on tablets/phones. Activate it with Enter/Space; Tab reaches links; Escape closes it and returns focus. Password/logout stay visible. Wide histories scroll inside their own regions (including vertically for long lists) with sticky column headings. The employee directory comes first; **Add an employee** focuses the form below it, and Edit opens that same form. Deletion still uses the browser's confirmation dialog.
 
@@ -155,4 +180,67 @@ Both generated originals were visually inspected before local WebP optimization.
 
 The focused Phase 6 browser suite writes isolated screenshots and final/provisional PDFs under ignored `qa/phase6/after/`; representative before captures are under `qa/phase6/before/`. These files are not served by the app or committed automatically. Exact browser results, visual inspection and limits are recorded in PROGRESS.md. Emulated layouts and headless A4 rendering are not physical-device, screen-reader or native OS print verification.
 
-See AGENTS.md for permanent guidance, PLAN.md for the PDF checklist and PROGRESS.md for the current handoff. Phases 1–6 are complete with 71 domain tests and 64 browser scenarios passing. Phase 6 is paused for screenshot review/manual commit/push. Phase 7 final acceptance needs separate authorization. Do not commit, push, deploy or submit automatically.
+## Manual print and device checks
+
+These remain unverified; headless PDF generation and a stubbed `window.print()` do not exercise the native OS dialog or create a real user download.
+
+1. In your browser, calculate the intended employee/period and click **Print / Save as PDF**. Choose A4 portrait and Save as PDF, complete the Save action, then open the saved file. Confirm company, employee ID/name, month, gross/deduction/net, formula and every applicable provisional/proration/unresolved notice. Check for blank/extra pages or clipping. Repeat with native Ctrl+P and a provisional slip; choose a physical printer too if needed.
+2. On an actual phone/tablet, open the final HTTPS site: test Menu, sideways table scrolling, check-in/out, leave form/review, helper, password and logout. Rotate/zoom and confirm no blocked controls. Use sample information.
+3. Check another browser and, if available, a screen reader. Keyboard-test Tab/Shift+Tab, Menu Enter/Space/Escape and visible focus; enable reduced motion. Emulated Edge checks and sampled contrast are not a comprehensive accessibility certification.
+
+## Manual Git synchronization, commit and push
+
+Read-only audit snapshot: local `main` at `6924739fb507b362b8bbde3c1fd025d6f00bc2bd` (`Phase 6 completed`); GitHub main at `c581171e9c1854880286c1ad91886b252b544a16`. GitHub's compare API reports remote **3 ahead / 0 behind**, with Create/Update/Delete CNAME commits and **no net changed files**. The local `origin/main` reference was stale. These values describe the audit, not a guarantee that the remote will remain unchanged.
+
+Review the ten intended files below and ignored QA screenshots first. Then run these yourself; the agent has not run them:
+
+```sh
+git status --short
+git diff
+git fetch origin
+git log --oneline HEAD..origin/main
+git diff HEAD origin/main --
+git merge --ff-only origin/main
+git add js/leaves.js js/storage.js tests/domain.test.cjs tests/leaves.test.cjs tests/inventory.test.cjs tests/phase7-browser.cjs ACCEPTANCE.md PLAN.md PROGRESS.md README.md
+git diff --cached --check
+git diff --cached --stat
+git commit -m "fix: complete HCM Lite final acceptance and submission handoff"
+git push origin main
+git status --short
+git rev-parse HEAD
+git ls-remote --heads origin main
+```
+
+At the recorded snapshot the merge is a fast-forward with no content changes. If the fetched comparison differs, the merge refuses, or push is rejected, stop and inspect the new changes; do not force-push/reset or discard work. Confirm the final local SHA matches `refs/heads/main` returned by `ls-remote`. Required app assets are already tracked: both SVGs and both WebPs. `qa/` is ignored; tests/fixtures are tracked verification code with synthetic `example.test` credentials, not runtime data. No secret/private-key patterns or personal data dumps were found in the reviewed tracked tree; this was a scoped scan/review, not a full historical secret audit.
+
+## Manual GitHub Pages hosting and live verification
+
+The app has no build step, backend or dependency install. Keep `index.html`, `pages/`, `css/`, `js/` and all four `assets/` files with their exact filename case and relative paths. Local inventory and the independent prefix host pass; actual public hosting and its current configuration remain unverified.
+
+1. After the reviewed push, open the [confirmed repository](https://github.com/SyedMustafa1101/SMIT-Hackathon-HCM-Lite), then **Settings → Pages**. Inspect any existing configuration first. If hosting is not configured, choose **Deploy from a branch**, `main`, `/(root)`, and **Save** yourself. Check the Pages/Actions deployment result. These steps follow [GitHub's publishing-source instructions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). No hosting change was made during this audit.
+2. Copy the actual HTTPS site URL displayed by Pages after successful deployment. Verify it opens without GitHub sign-in in a fresh browser context. Put that verified URL in this README and the LMS; no guessed URL is supplied as a live deliverable. Preserve the project subdirectory/trailing slash when sharing the root link. A custom domain is optional; no `CNAME` remains in the compared tree.
+3. On that origin, confirm setup starts empty, logo/favicon/artwork/styles/scripts load, and the browser network/console shows no missing files or page errors. Directly open each of the six `pages/*.html` URLs while logged out: each must return to that site's `index.html`. Then check Admin and Employee navigation/redirects, working account creation, settings, attendance, leave/review, announcement/helper, payslip and refresh persistence.
+4. Finish the native print/device checklist above. Recheck the deployed commit and page content after any further push. Keep tests/tools/QA out of runtime references; the app works without them. Publishing the repository root may expose tracked docs/tests as static files; their fixtures are synthetic, and the preview allowlist is not a security boundary on GitHub Pages.
+
+**localhost and hosted localStorage are separate.** Accounts/data from `http://127.0.0.1:4173` do not transfer to the HTTPS host. Each origin/profile/browser has its own storage; paths on the same origin share it (including other GitHub Pages projects on the same user domain). Use one editing tab. Do not expect another device or the judges' browser to inherit your setup; the delivered app intentionally starts empty.
+
+## Three-to-five-minute demo
+
+Use a fresh demo browser profile on the verified site, enter sample information yourself and keep the real device clock. Pick a leave date that is a configured working day on/after joining; today's check-in may legitimately be optional on a nonworking day.
+
+| Time | Demonstration |
+| --- | --- |
+| 0:00-1:00 | State the plain-JS/localStorage learning scope and empty startup. Create company rules and Admin, then sign in. |
+| 1:00-1:40 | Add an employee with salary/joining date and usable login; show search/filter and a quick settings/profile edit. Log out. |
+| 1:40-2:30 | Employee signs in, checks in/out and requests one working day of leave. Explain an immediate checkout is a Half day, not an invented five-hour shift. Show Pending and reserved quota. |
+| 2:30-3:15 | Admin signs in, reviews the current day count, approves with a comment and posts an announcement. Ask the three Admin suggestions: employee count, leave today, late today. Future approval may correctly leave today's leave count at zero. |
+| 3:15-4:00 | Employee sees approval/comment, updated balance and announcement. Ask the three own-data questions; unknown lateness/short completed hours reflect actual records. Show own-only navigation and password action. |
+| 4:00-5:00 | Calculate own payslip, explain current-month projection and any joining proration, then open Print/Save as PDF. Show Admin can choose employees, log out and reload to demonstrate persisted records without an active session. |
+
+Do not change the device clock, insert fixture records or imply an instant demo generated a completed month's salary. The exact 26,000/26-day/3,000 deduction/23,000 net example is independently verified in the isolated automated tests. If recording a shorter demo, show those test results separately from the live UI.
+
+## LMS handoff
+
+After the final push, public HTTPS verification and manual checks, submit the repository URL and actual verified hosted URL at [Saylani LMS](https://lms.saylaniit.com/) using your account. Follow the portal's current assignment instructions, include a demo/walkthrough if requested, and confirm both links and the submission receipt. Hosting, a judge's demo and LMS acceptance are not completed by this local audit.
+
+See AGENTS.md for permanent policies, PLAN.md for milestone history, ACCEPTANCE.md for the final requirement matrix and PROGRESS.md for exact evidence. Phase 7 local work is complete and paused for user review/manual actions. No automatic commit, push, hosting or submission is authorized.

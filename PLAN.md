@@ -6,7 +6,7 @@ The workspace was inspected before implementation on 2026-10-24. It contained on
 
 The PDF defines product behavior. Its instructions to host and submit describe eventual hackathon deliverables; they do not authorize this agent to deploy, submit, commit, or push. The user's explicit phase boundary and prohibition on those actions govern this work. Optional cover imagery, figures, Chart.js, LLM access, camera, location, and face detection are not mandatory requirements. PDF folder names are suggestions; the user's exact seven-page paths govern.
 
-Use plain HTML, CSS, JavaScript, and localStorage only. No framework, backend, database service, external AI API, seeded accounts, or demo records. Mandatory behavior precedes polish. No charts, dark mode, camera/location, or face detection. Phase 6 explicitly authorizes restrained native motion and generated local artwork. Work locally; do not deploy, submit, commit, or push. Stop after each authorized milestone for the user to commit and push. Current milestone: Phase 6 complete, paused for screenshot review/manual commit/push. Repeat verification, documentation, report, suggested commit message, and pause at each phase.
+Use plain HTML, CSS, JavaScript, and localStorage only. No framework, backend, database service, external AI API, seeded accounts, or demo records. Mandatory behavior precedes polish. No charts, dark mode, camera/location, or face detection. Phase 6 explicitly authorized restrained native motion and generated local artwork. Work locally; do not deploy, submit, commit, or push. Stop after each authorized milestone for the user to commit and push. Current milestone: Phase 7 local acceptance complete on 2026-10-25, paused for review/manual Git synchronization, commit/push, print/device checks, hosting verification and LMS submission. Overall hackathon delivery is still pending.
 
 ## Mandatory requirements checklist
 
@@ -51,7 +51,8 @@ Verified on 2026-10-24: 14 domain tests and 14 isolated Edge browser scenarios p
 - [x] Required Employee helper questions: own leaves left (quota minus own approved leave days); was I late today; own hours worked this week.
 - [x] Announcements: Admin posts, Employee reads (#13); stored in `hcm_announcements` per the user's explicit additional key.
 - [x] Responsive phone design and clear forms/errors; organized reusable code; clear walkthrough and README explaining available app use (sections 1 and 7). Dedicated premium design is Phase 6; final cross-workflow audit is Phase 7.
-- [ ] Eventual hosted link plus GitHub repository link and LMS submission (sections 1 and 7): deferred to the user; this session must not deploy or submit.
+- [x] GitHub repository link exists and remote main is verified read-only; final Phase 7 changes still need manual commit/push. See PROGRESS.md for the three remote-only commits and README.md for synchronization steps.
+- [ ] Verified live hosted link and LMS submission (sections 1 and 7): pending user actions; no hosting settings, deployment or submission performed. Native print/device checks remain separate manual verification limits.
 
 PDF role matrix #01–05 and storage section 4 are covered by the Phase 1 checklist above, including both own-password changes, working days and the exact six keys. The PDF's simple storage snippet is illustrative, not a requirement to use timestamp IDs, plaintext passwords or silently reset malformed JSON.
 
@@ -63,9 +64,9 @@ PDF role matrix #01–05 and storage section 4 are covered by the Phase 1 checkl
 4. **Payroll and payslips — complete:** reusable read-only payroll module, PDF formula, Admin all / Employee own, month/year selection, current-settings derivation, joining proration/current-month projection, approved paid leave and unresolved-shift notices, browser print / Save as PDF. Domain/browser regressions and A4 output verified; paused for review/manual commit/push.
 5. **Announcements and keyword helper — complete:** Admin posts validated announcements; both dashboards read newest first. Memory-only keyword chats answer all six required question groups from fresh role-scoped data. Storage/save errors, safe rendering, account changes, keyboard and phone layouts verified; paused for review/manual commit/push.
 6. **Dedicated premium UI/UX — complete:** shared navy/blue identity, design tokens, SVG mark/favicon, generated local illustrations, seven redesigned pages, responsive sidebar/Menu, semantic badges, real overview cards, grouped forms, contained histories, professional payslip and reduced-motion/native animation. Domain/browser regression, visual/print verification and documentation complete; paused for screenshot review/manual commit/push.
-7. **Final acceptance:** compare every PDF requirement and user constraint, test all cross-workflow behavior, persistence, roles, accessibility/responsiveness, errors and empty first run after the design stage. Update README/demo and final checklist; pause. No automatic deployment/submission.
+7. **Final acceptance — local work complete:** source-to-evidence matrix in ACCEPTANCE.md, dashboard joining-date and unknown-storage-field preservation corrections, full existing regression/syntax/inventory/diff checks, complete UI-created cross-workflow journey, independent case-sensitive repository-prefix hosting test, responsive/keyboard/reduced-motion and final/provisional A4 inspection, Git comparison and README/demo/manual delivery handoff. Pause for user review/actions; native print/devices, verified public hosting and LMS delivery remain pending.
 
-Phases 1–6 are complete. The user's attached Phase 6 request supersedes the earlier Phase 5 stop wording and authorizes this design milestone only. Phase 7 remains separately authorized work. User commits and pushes after each phase; the agent supplies a suggested commit message and pauses.
+Phases 1–6 retain their numbering and completion records. The user's attached Phase 7 request separately authorized final acceptance and explicitly skipped further cosmetic refinement. Phase 7 local work is now complete; the remaining delivery actions below belong to the user. User commits and pushes; the agent supplies a suggested commit message and pauses.
 
 ## Phase 2 policies and acceptance (recorded before calculations)
 
@@ -136,3 +137,25 @@ Rechecked PDF sections 1–5 and 7 at the historical Phase 5 checkpoint: setup/a
 - [x] Update all four guidance/handoff documents; report limitations and suggested commit; pause for screenshot review/manual commit/push. Phase 7 remains separate.
 
 Verified on 2026-10-25: **71 domain tests**, **54 existing + 10 Phase 6 browser scenarios (64 total)**, all 21 JavaScript syntax checks, inventory and diff checks. Reviewed all seven pages at 1440/834/390px and one-page final/provisional A4 renders; native printing, physical devices, assistive technology and full accessibility conformance remain unverified. Generated artwork succeeded. GSAP was not clearly authorized; native progressive motion was used. See PROGRESS.md for evidence, iterations and limits.
+
+## Phase 7 final acceptance and submission readiness
+
+- [x] Read permanent guidance, full plan/progress/README, original four-page PDF, implementation and existing tests; preserve current design and useful work.
+- [x] Create ACCEPTANCE.md mapping every mandatory PDF feature/role/helper/delivery requirement to source, concrete assertions and honest pass/pending/unverified status; distinguish agreed policies from PDF mandates.
+- [x] Fix genuine dashboard inconsistency: approved leave today excludes dates before current joining, matching helper/attendance/payroll. Reproduce with a failing test, fix, then pass scoped domain and UI regression without altering saved decisions.
+- [x] Fix preservation gap: reject unfamiliar fields in company, role-specific user and password records, blocking reads/edits with all raw data intact rather than allowing later saves to discard fields. Reproduce before fix; verify domain and browser preservation. Existing valid schemas are unchanged; no migration.
+- [x] Run all original domain/browser suites; add only bug regressions, inventory and complete cross-workflow/prefix-host tests. Final: 73 domain + 2 inventory tests, 71 browser scenarios, 23 JavaScript syntax checks; inventory and diff checks pass.
+- [x] Complete disposable UI journey: empty setup -> Admin employee creation -> Employee login/check-in/out/leave -> Admin review/announcement -> Employee decision/balance/announcement/all own helper answers -> both roles' slips -> logout/reload/relogin persistence. Controlled browser time only; no delivered seed data/device-clock change.
+- [x] Recheck malformed/unavailable storage, denied writes/source preservation, stale sessions/direct IDs, safe text and exact 3,000 deduction / 23,000 net through existing suites and evidence matrix.
+- [x] Regenerate seven-page desktop/tablet/390px captures, inspect readable phone sections, keyboard/menu/account actions, reduced motion/assets/no overflow; re-render and inspect one-page Final and Provisional A4 slips with identity/formulas/notices. Record headless/native limits separately.
+- [x] Confirm relative exact-case runtime files under `/SMIT-Hackathon-HCM-Lite/` using an independent static host with no preview-tool import; all seven direct routes/redirects and four assets work, no external app requests. Separate browser origins start empty.
+- [x] Inspect Git read-only. Starting tree clean; local main `6924739`, remote main `c581171`. GitHub comparison: remote 3 ahead / 0 behind, Create/Update/Delete CNAME, no net changed files. Required four assets tracked, QA ignored, scoped secret/data review clear. No Git state changed.
+- [x] Update README purpose/workflows/policies/commands/limits, repository link, manual synchronization/publishing instructions and 3-5 minute demo; PROGRESS has exact outcomes, remaining actions and suggested commit.
+- [ ] User: review changes/QA; fetch/inspect and fast-forward the remote commits, manually commit/push Phase 7 and confirm matching remote SHA.
+- [ ] User: native print and actual Save as PDF, physical phone/tablet and any additional browser/assistive-technology checks.
+- [ ] User: inspect/configure hosting as needed, verify the actual HTTPS URL with a clean context and direct-route/assets/workflow checks, add that verified link to README.
+- [ ] User: submit verified repository + hosted links on LMS and confirm receipt. Overall delivery stays pending until this is done.
+
+No known failing mandatory local feature remains in the exercised scope. Unverified delivery/native-device items are not counted as passed. See ACCEPTANCE.md and PROGRESS.md; do not automatically stage, commit, push, reset, deploy or submit.
+
+Suggested commit message: `fix: complete HCM Lite final acceptance and submission handoff`

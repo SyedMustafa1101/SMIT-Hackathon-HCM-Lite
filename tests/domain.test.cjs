@@ -140,6 +140,26 @@ test('malformed JSON, unsupported schemas and partial collections are preserved 
   const partial = context(); partial.adapter.setItem('hcm_attendance', '[]'); await assert.rejects(partial.app.setup(setup()), /incomplete/); assert.equal(partial.adapter.data.size, 1);
 });
 
+test('unknown company/account/password fields block editing and preserve every raw collection', async () => {
+  const c = await ready(); await c.app.addEmployee(employee());
+  const clean = new Map(c.adapter.data);
+  for (const [key, change] of [
+    ['hcm_company', value => { value.unfamiliarSetting = 'keep this'; }],
+    ['hcm_users', value => { value[0].unfamiliarAccount = 'keep this'; }],
+    ['hcm_users', value => { value[1].unfamiliarAccount = 'keep this'; }],
+    ['hcm_users', value => { value[0].password.unfamiliarHashVersion = 'keep this'; }]
+  ]) {
+    c.adapter.data.clear(); for (const [k, v] of clean) c.adapter.data.set(k, v);
+    const value = JSON.parse(c.adapter.getItem(key)); change(value); c.adapter.setItem(key, JSON.stringify(value));
+    const before = [...c.adapter.data];
+    assert.throws(() => c.app.getState(), /unsupported|invalid/);
+    assert.throws(() => c.app.saveSettings({ ...setup(), companyName: 'Must not erase fields' }), /unsupported|invalid/);
+    await assert.rejects(c.app.changePassword({ currentPassword: setup().password, newPassword: 'New-Test-123', confirmPassword: 'New-Test-123' }), /unsupported|invalid/);
+    await assert.rejects(c.app.setup(setup()), /unsupported|invalid/);
+    assert.deepEqual([...c.adapter.data], before);
+  }
+});
+
 test('blocked storage and failed setup writes produce errors with no partial setup', async () => {
   const blocked = context({ getItem() { throw new Error('denied'); } }); assert.throws(() => blocked.app.getState(), /storage is unavailable/);
   const adapter = memory(), original = adapter.setItem; adapter.setItem = (key, value) => { if (key === 'hcm_leaves') throw new Error('quota'); original(key, value); };

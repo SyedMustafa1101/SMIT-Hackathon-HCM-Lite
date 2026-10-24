@@ -1,6 +1,87 @@
 # Progress and handoff
 
-## Current handoff: Phase 6 — complete, paused for screenshot review/manual commit/push
+## Current handoff: Phase 7 local acceptance complete; manual delivery pending
+
+Completed local audit on **2026-10-25 (Asia/Karachi)** under the user's attached “Implement Phase 7 — Final Acceptance and Submission Readiness” request. That request supersedes the Phase 6 pause for this acceptance milestone, skips further visual refinement and preserves the current design. Read AGENTS.md, full PLAN/PROGRESS/README, all four physical pages of the original PDF via pypdf, implementation and existing test coverage before changes. Original PDF remains unchanged in Downloads. No staging, commit, push, fetch, reset, branch/checkout change, hosting configuration, deployment or LMS submission was performed.
+
+**Local mandatory implementation checks pass. Entire hackathon delivery is not complete.** The user must review, synchronize Git, commit/push, finish native print/device checks, verify public hosting/link and submit to LMS. See ACCEPTANCE.md for every mandatory requirement's evidence/status, separated from implementation policies; README.md contains the exact manual sequence and demo.
+
+### Functional audit finding and changes
+
+- Found a real count inconsistency in `js/leaves.js`: `overview().approvedToday` included an existing approval even after Admin moved the employee's joining date after today. Helper coverage, derived attendance and payroll already excluded pre-joining dates. Added `u.joiningDate <= today` to the overview's current-Employee predicate; no data/schema/policy/design change.
+- Added a meaningful regression to `tests/leaves.test.cjs`. It first failed with **1 instead of 0** after the joining edit, then passed after the fix. It covers Admin and own Employee overview, helper agreement, actual-attendance coexistence, nonworking dates, deleted employee exclusion and byte-for-byte preservation of the saved approval. The reproduced failure is not counted as passing evidence.
+- Final preservation review found `js/storage.js` accepted unknown fields on company, user and nested password records; later company/password replacement could discard them. Added exact field-set validation for those existing schemas. Unfamiliar records now block reads/edits with the existing preservation error; valid records/keys stay unchanged, and no migration is attempted. New `tests/domain.test.cjs` regression first failed with a missing expected exception, then passed across company/Admin/Employee/password variants, blocking settings/password/repeated setup and preserving every raw collection. B7 adds fatal-error/raw-preservation UI checks. Full domain and browser regression were rerun after this shared validation fix.
+- Added `tests/inventory.test.cjs`: exact seven-page and relative/case-sensitive runtime inventory, shared script ordering, CSS asset paths, and no external API/package/preview/test/QA runtime dependency. This closes a delivery-verification gap rather than adding product functionality.
+- Added `tests/phase7-browser.cjs`: single complete UI-created journey on an independent file-only host (does not import `tools/serve.cjs`), repository prefix `/SMIT-Hackathon-HCM-Lite/`, direct routes/role redirects, all runtime files/four assets, no unexpected requests, account keyboard access at all three widths, origin separation and unfamiliar-field storage preservation. Only regression-specific joining-date edits use direct domain calls; company, accounts, attendance, leave, decision and announcement are created via real forms/actions. Malformed-state checks inject data only into the disposable context.
+- Added ACCEPTANCE.md and updated PLAN.md/README.md/this file. Intended changes are exactly these **ten files**: two production modules, existing domain/leave tests, two new test files and four audit/handoff documents. Production changes are the joining-date predicate and strict unknown-field preservation validation; Phase 6 styling/assets/pages remain unchanged. Existing regression assertions remain intact.
+
+### Final verification results
+
+All records were in isolated in-memory adapters or disposable Edge browser contexts/temporary origins. No real profile/company was opened or seeded; only browser-test time was controlled, never the device clock.
+
+| Command / check | Final outcome |
+| --- | --- |
+| `node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs tests/phase5.test.cjs tests/inventory.test.cjs` | **75 passed, 0 failed/skipped**: 73 domain (71 originals + two bug regressions) and 2 inventory tests. |
+| `node tests/browser.cjs` | **14 passed**: empty setup, all routes, both roles/passwords/logout, CRUD/search/filter, settings, malformed/denied/full storage and empty delivery. |
+| `node tests/attendance-browser.cjs` | **10 passed**: actual actions, cutoff/half-day boundaries, all/own scope, filters/absence, nonworking/overnight/joining, failed saves and phone layout. |
+| `node tests/leaves-browser.cjs` | **10 passed**, including a rerun after the domain fix: request/review/approval/rejection/comment/balance, current settings/quota/stale review, source/draft preservation and phone scope. |
+| `node tests/payroll-browser.cjs` | **9 passed**: exact **3,000 deduction / 23,000 net**, identity/period/scope, no writes, safe text, print stub/media/beforeprint, projection/proration/unresolved notices and phone layout. |
+| `node tests/phase5-browser.cjs` | **11 passed**: announcements/all six helper groups, safe text, fresh role/storage, known values, failed saves, own-only queries, keyboard/phone and history clearing. |
+| `node tests/phase6-browser.cjs` | **10 passed**: regenerated all seven pages/setup/login at **1440/834/390px**, menu keyboard/focus/active links, no overflow, same-account drafts/filter/focus, missing art/API fallback, reduced motion initial/live, selected slip recalculation and A4 output. |
+| `node tests/phase7-browser.cjs` | **7 passed**: complete journey, known values below, joining-date UI regression, prefix-host direct routes/runtime/roles, keyboard password/logout/Enter-to-password-form on protected page types at 1440/834/390px, independent host, clean-context/second-origin empty startup and unknown company/account/password fields blocking UI with all raw values preserved. |
+| JavaScript syntax | `node --check` on all **23** files in js/tests/tools passed (PowerShell loop in README). |
+| Inventory and diff | Exactly seven HTML pages, nine shared scripts, four required assets/six keys retained; relative exact-case inventory tests pass; `git diff --check` passes. Git's LF-to-CRLF notices are informational. |
+
+Total: **71 passing browser scenarios** (64 existing + 7 new). The matrix names concrete assertions/source and limitations; totals alone are not requirement evidence. The final expanded Phase 7 run includes keyboard account and unfamiliar-field assertions; earlier narrower runs are not added to the count. All seven browser suites were rerun sequentially after the shared storage fix. No known failing local check remains.
+
+Verified environment: bundled Node on PATH, installed headless Microsoft Edge, existing development-only Playwright at `C:\Users\ALPHA\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright`, with `HCM_PLAYWRIGHT_MODULE` set accordingly. No runtime dependency install/build is required. README lists all seven browser commands, combined domain/inventory command and syntax/diff loop.
+
+### Complete journey and independently expected values
+
+On a case-sensitive repository-prefix static host, a fresh disposable Asia/Karachi context starts with zero keys. UI setup creates Acceptance Studio, 09:00 start + 15 grace, Monday-Friday, quota 5; UI Admin creates one employee, salary 22,000, joining 2026-10-19. Logout/refresh and Employee form login work. Controlled check-in at 2026-10-19 09:15:00.001 (+1ms beyond cutoff), checkout at 14:15:00.001: **Late**, exactly **18,000,000ms / 5 completed hours**, not Half day; duplicate check-in disabled. UI leave request for October 20 counts **1 working day**, Pending 1/available 4 after reload.
+
+Admin UI opens review, sees current/saved count 1, approves with a comment and posts an announcement. Browser time advances to October 20: approved-today count is 1; moving joining to October 21 changes dashboard/helper to 0 without changing the saved approval, then the edit is restored. Employee sees Approved/comment, approved balance **4**, pending **0**, available **4**, announcement and helper answers. All six question groups are exercised: Admin current count 1/late first day 1/approved next day 1; Employee saved late first day/unknown next day, balance 4 and weekly completed hours 5. Markup-like reason/comment/title stay literal text.
+
+Both roles see the same own/selected current-month slip: **22 configured / 10 eligible days**, salary 22,000, gross/net **10,000**, approved paid leave 1, absence/half/deduction 0. Full-month projection/proration are explicit; lateness alone adds no deduction. Reading/calculating leaves all non-session raw storage unchanged. Logout/reload/relogin preserves data. Direct Admin/Employee paths redirect correctly, and a different origin plus a fresh context each show empty setup. Returning to the original origin retains the company. No app external network requests or page errors were observed.
+
+### Responsive and print review
+
+B6 regenerated screenshots under ignored `qa/phase6/after/` (same stable paths used by that suite). Created fresh `qa/phase7/overview-{1440,834,390}.jpg` contact sheets and readable top/end phone crops of both dashboards; inspected these and the two latest Poppler page renders. Layout keeps forms/actions usable, account buttons reachable, table scrolling contained and artwork loaded/fallback usable. No blocking overflow or visual redesign was needed. Sampled contrast remains **14.83, 5.45, 5.17, 11.21, 6.09, 6.66, 6.55, 5.00** for text/button/status samples; input boundary **3.35:1**. This is not a full WCAG audit.
+
+Latest `final.pdf` and `provisional.pdf` from B6 each have **one A4 page, 594.95996 x 841.91998 points** (pypdf). Poppler renders are `qa/phase7/print-final.png` and `print-provisional.png`; inspected identity, selected 2026-09 period, 66,000 salary / 22 working / 11 eligible days, 3,000 daily rate, **33,000 gross/net**, zero deductions, formula and joining proration. Provisional retains the unresolved **2026-09-17** notice. No missing identity, clipped values or workspace controls. B4 also re-rendered its exact 23,000-net and provisional fixtures in system temp; its Final PDF was separately extracted (one page, **3,000 deduction / 23,000 net**) and visually inspected as `qa/phase7/print-exact-example.png`, including literal safe markup and full-month formula.
+
+These are headless PDF/media checks and print invocation stubs. **Native OS print dialog, actual user Save destination/download/printer and physical devices/assistive technology were not exercised.** README has the short manual checklist. A4 QA PDFs are synthetic test evidence, not generated payslips for a real company. A local QA script's initial quoting/name-shadowing errors were corrected before the successful extraction/contact-sheet review; they did not affect app code or acceptance results.
+
+### Hosting and tracked-content readiness
+
+- Independent static host serves only index/pages/css/js/four assets, with exact-case path membership even on Windows. B7 directly loads all seven page paths and checks role redirects under **`/SMIT-Hackathon-HCM-Lite/`**. It checks every runtime file, confirms wrong-case/test/QA requests are unavailable on that test host, and proves no dependency on the preview implementation or bundled tooling. GitHub Pages may serve tracked docs/tests; the local allowlist is not represented as a public-host security control.
+- All four required assets are tracked: `logo.svg`, `favicon.svg`, `team-work.webp`, `empty-work.webp`; inventory confirms their exact references. `qa/` is ignored (`git check-ignore` confirmed the PDF); no QA/test file is a runtime reference. Tests and their synthetic `example.test` credentials are tracked verification code, not delivered seeded accounts. No JSON/CSV/XLSX/PDF/env/private-key data dump is tracked.
+- Reviewed tracked runtime/test inventory and scanned tracked text for common API/private-key patterns (AWS access ID, GitHub/OpenAI token shapes, PEM private-key headers): no matches. Existing fixture credentials are explicitly synthetic and isolated. This scoped working-tree scan is **not** a complete Git-history or security certification.
+- No live hosted URL verified. Web access to the candidate/repository page was unavailable via the browsing tool; this does not establish that hosting is disabled or the site is down. Hosting configuration was neither inspected nor changed. README labels hosted link pending and instructs the user to copy the actual successful Pages URL, then verify its HTTPS/direct routes/assets/workflows in a clean browser before recording/submitting it.
+- Localhost and HTTPS storage are separate origins and hosted first run starts empty. Same-origin paths share localStorage; one editing tab remains the policy. No deployed data transfer/backend is implied.
+
+### Git synchronization evidence (read-only snapshot)
+
+- Starting `git status --short`: **clean**. Branch **main**; latest local commit **`6924739fb507b362b8bbde3c1fd025d6f00bc2bd`**, subject **Phase 6 completed**. Local cached `origin/main` pointed there too; cached tracking alone did not prove synchronization.
+- `origin` fetch/push URL: **`https://github.com/SyedMustafa1101/SMIT-Hackathon-HCM-Lite.git`**. First sandboxed remote read failed network access; authorized read-only retry of `git ls-remote --heads origin main` succeeded: **`c581171e9c1854880286c1ad91886b252b544a16 refs/heads/main`**.
+- Read-only GitHub REST comparison of local HEAD to that remote SHA: **ahead 3, behind 0, no net changed files**. Commits: `f06da3148d0d95e465c0b1802e83a33e893289af` Create CNAME; `d1f638ec84ec620b84d88a48aa49a607d2290084` Update CNAME; `c581171e9c1854880286c1ad91886b252b544a16` Delete CNAME. Committed file contents match at those two revisions; **branch histories are not synchronized**. No CNAME remains. This does not verify Pages settings/live deployment.
+- Remote objects were not fetched into the local repository, refs/HEAD were not updated and the checkout stayed on main. Changes produced by this milestone are unstaged: modified `js/leaves.js`, `js/storage.js`, `tests/domain.test.cjs`, `tests/leaves.test.cjs`, `PLAN.md`, `PROGRESS.md`, `README.md`; new `tests/inventory.test.cjs`, `tests/phase7-browser.cjs`, `ACCEPTANCE.md`. All Phase 6 assets were already committed/tracked. Remote state may change after this snapshot.
+
+### Exact remaining user actions and stop
+
+1. Review the ten-file diff, ACCEPTANCE matrix and local ignored screenshots/PDFs. README has the manual/native checklist and 3-5 minute live demo; no further cosmetic iteration is required by this milestone.
+2. Run the README Git sequence yourself: `git fetch origin`, inspect fetched log/content diff, then `git merge --ff-only origin/main` if it matches this safe fast-forward snapshot. Stop on unexpected changes/conflicts; no forced reset/push. Stage the ten named files, inspect staged diff/check, commit and push main; confirm local HEAD equals fresh `ls-remote` main. The three remote commits must be incorporated before a normal push.
+3. Perform native A4 Print/Save and actual saved-file inspection, then actual phone/tablet and any additional browser/assistive-technology checks. Record any defects before submission.
+4. Inspect repository Settings -> Pages. If needed, manually choose branch main / root and save; wait for successful deployment. Copy the real HTTPS URL, verify logged-out/public access, assets, all direct protected URLs, both complete workflows and persistence from clean hosted storage. Add only that verified hosted URL to README and push the doc update manually.
+5. Submit the verified repository URL + hosted URL to **https://lms.saylaniit.com/** using the user's account; follow current assignment/demo instructions and confirm receipt. This remains pending, not an achieved delivery claim.
+
+Suggested commit message: **`fix: complete HCM Lite final acceptance and submission handoff`**.
+
+**Stop for user review/manual actions.** No known failing local mandatory functionality remains; native-device/print and public delivery claims stay unverified/pending as stated. The historical records below preserve prior phase evidence and are superseded by this handoff.
+
+---
+
+## Phase 6 — historical completion record (superseded by Phase 7 above)
 
 Completed on 2026-10-25 under the user's attached “Implement Phase 6 — Premium UI/UX and Visual Identity” request. Read AGENTS.md, PLAN.md, this file, README.md, all four physical pages of the original PDF (pypdf text extraction), all seven page shells, shared styling/rendering, services and existing tests before implementation. The PDF does not clearly allow GSAP: it specifies plain HTML/CSS/JavaScript and optionally Chart.js. Used native motion, without a new runtime dependency. Phases 1–5 retain their numbering and working behavior; Phase 7 final acceptance remains separate. No commit, push, deployment, submission, app backend, new page/key, app seed data or optional bonus was added.
 

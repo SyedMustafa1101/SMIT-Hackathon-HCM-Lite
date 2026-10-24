@@ -163,6 +163,27 @@ test('leave today gets a derived row, future leave stays in request history; ope
   await employee(c); c.app.attendance.checkIn(); const r = c.app.attendance.report(); assert.equal(r.rows.length, 1); assert.equal(r.summary.open, 1); assert.equal(r.summary.approvedLeave, 0);
 });
 
+test('approved-today dashboard follows current joining date and helper coverage without changing saved approval', async () => {
+  const c = await ready(); await employee(c);
+  const leave = c.app.leaves.request(input());
+  c.app.attendance.checkIn();
+  await admin(c); review(c, leave.id);
+  const raw = c.data.get('hcm_leaves'), user = c.app.employees().find(u => u.id === c.ids[0]);
+  // Coverage counts even with attendance, but never before current employment.
+  assert.equal(c.app.leaves.overview().approvedToday, 1);
+  assert.match(c.app.helper.query('Who is on leave today?').answer, /1 current employees/);
+  c.app.editEmployee(user.id, { ...user, joiningDate: '2026-10-20' });
+  assert.equal(c.app.leaves.overview().approvedToday, 0);
+  assert.match(c.app.helper.query('Who is on leave today?').answer, /0 current employees/);
+  await employee(c); assert.equal(c.app.leaves.overview().approvedToday, 0);
+  await admin(c); c.app.editEmployee(user.id, user);
+  c.app.saveSettings({ ...settings, workingDays: [0] });
+  assert.equal(c.app.leaves.overview().approvedToday, 0);
+  c.app.saveSettings(settings); c.app.deleteEmployee(user.id);
+  assert.equal(c.app.leaves.overview().approvedToday, 0);
+  assert.equal(c.data.get('hcm_leaves'), raw);
+});
+
 test('strict leave validator preserves unfamiliar/malformed fields and rejects duplicate IDs', async () => {
   const c = await ready(); await employee(c); const good = plain(c.app.leaves.request(input()));
   const changes = [l => { l.extra = 1; }, l => { delete l.id; }, l => { l.employeeId = ''; }, l => { l.from = '2026-02-30'; }, l => { l.to = '2027-01-01'; }, l => { l.days = 0; }, l => { l.days = 2; }, l => { l.days = 1.5; }, l => { l.type = 'Unknown'; }, l => { l.reason = ' '; }, l => { l.requestedAt = 'bad'; }, l => { l.comment = 'already reviewed'; }, l => { l.reviewedBy = 'admin'; }, l => { l.status = 'Approved'; }, l => { l.status = 'Rejected'; l.comment = 'x'; l.reviewedBy = 'admin'; l.reviewedAt = '2026-10-18T00:00:00.000Z'; }];
