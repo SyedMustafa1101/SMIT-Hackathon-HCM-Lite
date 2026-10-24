@@ -1,6 +1,86 @@
 # Progress and handoff
 
-## Current handoff: Phase 5 — complete, paused for user review/manual commit/push
+## Current handoff: Phase 6 — complete, paused for screenshot review/manual commit/push
+
+Completed on 2026-10-25 under the user's attached “Implement Phase 6 — Premium UI/UX and Visual Identity” request. Read AGENTS.md, PLAN.md, this file, README.md, all four physical pages of the original PDF (pypdf text extraction), all seven page shells, shared styling/rendering, services and existing tests before implementation. The PDF does not clearly allow GSAP: it specifies plain HTML/CSS/JavaScript and optionally Chart.js. Used native motion, without a new runtime dependency. Phases 1–5 retain their numbering and working behavior; Phase 7 final acceptance remains separate. No commit, push, deployment, submission, app backend, new page/key, app seed data or optional bonus was added.
+
+### Design system and seven-page changes
+
+- `css/style.css`: centralized navy/blue/green and semantic color tokens, readable system sans-serif typography, spacing, radii, shadows, layering and motion. White surfaces on a subtle light canvas, clear section hierarchy, shared controls/notices, visible focus, text-and-color status badges, numeric salary alignment and contained two-axis histories with sticky column headings. Input borders were strengthened to 3.35:1 against white; placeholder/core text colors pass the sampled contrast checks below.
+- Shared identity: HCM Lite / **People. Work. In sync.** Code-native H mark with a green connecting bridge, matching favicon, local icon strokes and readable text wordmark. Desktop fixed navy sidebar, active role-scoped links and account actions. Tablet/phone Menu uses a native button, correct controls/expanded attributes, hidden collapsed links, keyboard activation, Tab, Escape focus return and responsive desktop restoration. Password/logout remain reachable outside the collapsed navigation. Ordinary product footers no longer show development-phase labels; the learning-data limitation stays in appropriate auth help/docs.
+- `index.html`: editorial split login/setup with actual generated teamwork artwork, focused login form and grouped company/attendance/leave rules plus Admin fields. Explicit image dimensions prevent layout shift; mobile stacks cleanly with a compact illustration. Missing artwork reserves space and leaves the form/text usable.
+- Admin dashboard: four current-data overview cards (employees, check-ins, late check-ins, pending leave), workspace quick actions, clear leave overview, attendance hierarchy, contained long history, refined announcement form/feed and helper suggestions/conversation surfaces. No fake metric/chart/loading UI.
+- Employees: directory first, combined search/department toolbar, readable identity/salary rows, direct Add-to-form action, preserved add/edit validation and native delete confirmation. Edit and cancellation focus the proper field; deletion reports/focuses its outcome. The existing employee/login services are unchanged.
+- Leave requests: distinct Pending/Approved/Rejected badges, concise filters and readable details; active review is above the history with a blue boundary, current/saved day count and explicit decision/comment errors. Cancel returns focus to the invoking request. Stale data closes the review and requires explicit reopening while retaining its comment draft in memory.
+- Settings: numbered Company identity, Attendance schedule and Leave allowance groups; working-day choices clearly indicate selection, with preserved inline errors and saved/failed feedback. Current-settings/historical recalculation warnings remain honest.
+- Employee dashboard: own current-data overview cards; prominent current-shift state and check-in/out above the detailed summary; organized profile, attendance, leave request/preview/balance/history, announcements and helper. Leave-request/refresh changes update the overview values from services.
+- Payslip: clear employee/period selectors, a professional document surface, tabular calculation values and distinct net salary; current projection, joining proration and unresolved shifts retain explicit notices. Existing selected-identity, read-only recalculation, A4 print/Save-as-PDF and beforeprint validation remain intact.
+
+### Assets and motion actually delivered
+
+Image generation **succeeded twice**, using the built-in imagegen tool. Inspected both originals before integration and optimized the actual outputs locally with Pillow. No stock portraits, baked UI text/statistics or stand-in illustrations were used.
+
+| Local file | Source / role | Final dimensions and bytes |
+| --- | --- | --- |
+| `assets/logo.svg` | Code-native logo mark; shared brand text supplies the wordmark | 40×40 viewBox; 261 bytes |
+| `assets/favicon.svg` | Matching code-native favicon, linked on all seven pages | 40×40 viewBox; 261 bytes |
+| `assets/team-work.webp` | Generated editorial teamwork scene, auth/setup | 800×800; 49,772 bytes |
+| `assets/empty-work.webp` | Generated document-tray spot illustration, empty states | 240×240; 1,700 bytes |
+
+The auth image is decorative with `alt=""`, width/height and asynchronous decoding; CSS empty-state art has reserved space plus readable empty-state text. Assets are local and relative; preview allowlists only the four files and sends SVG/WebP MIME types. No external image/font/animation request is made by the app. Local subdirectory hosting was exercised in an isolated test server.
+
+`js/ui.js` reads timing/easing tokens from CSS. IntersectionObserver/native Web Animations provide visible-by-default, one-time section entrances, 35ms metric staggers capped at 105ms, a finite 700ms artwork settle and 160ms notice feedback. CSS supplies hover/pressed/navigation feedback. No hidden initial content, whole-view replay after rerender, per-row reveal, animated payroll amount, continuous art loop, smooth-scroll replacement or scroll hijacking. Missing observer/animation APIs skip enhancement. Reduced-motion preference disables initial movement and cancels ongoing motion when changed. Completed animation references are released; observers, animation handles, media/header listeners and print handlers are cleaned up on the relevant rerender/lifecycle boundary. Print forcibly removes transforms/opacity effects.
+
+### State preservation and implementation boundaries
+
+`js/pages.js` keeps same-account drafts, employee edit identity, filters, text selection, focus, open details and page/table scroll across storage rerenders. A deleted employee's draft is retained with Save disabled until Cancel; it cannot accidentally become a new account. A changed leave review retains a memory-only comment draft but closes its stale token; explicit reopening obtains current counts. Selected payslips recalculate after refresh instead of showing restored old totals. Account changes and fatal storage errors discard privileged content/drafts. Helper history still clears on account/storage rerender. Failed-save behavior remains verified by the original suites.
+
+Changed production files: `css/style.css`, `js/ui.js`, `js/pages.js`, the seven existing HTML shells and development-only `tools/serve.cjs`; added the four local assets. Added `tests/phase6-browser.cjs` and a `.gitignore` rule for local `qa/` output. Updated AGENTS/PLAN/README/PROGRESS. Existing storage/business modules (`storage`, `hcm`, `attendance`, `leaves`, `payroll`, `announcements`, `helper`) and all original test assertions were preserved.
+
+### Exact final verification
+
+All records belonged to in-memory adapters or disposable Edge contexts/temporary origins. The normal user profile and delivered app data were never seeded.
+
+1. `node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs tests/phase5.test.cjs`: **71 passed, 0 failed**. All existing domain/storage/role/calculation cases retained.
+2. `node tests/browser.cjs`: **14 scenarios passed**. Setup, roles/logins/passwords, employee CRUD/search/filter, settings, session/storage failures, phone layout and empty delivery.
+3. `node tests/attendance-browser.cjs`: **10 scenarios passed**. Attendance actions, timing/status/scope, filters, nonworking/overnight/joining policies, failed saves and phone layouts.
+4. `node tests/leaves-browser.cjs`: **10 scenarios passed**. Request → review → decision/balance, failed saves, comments, reservations, stale settings, approved attendance integration, scope, malformed data and phone review.
+5. `node tests/payroll-browser.cjs`: **9 scenarios passed**. Exact 26,000 / 26-day example = 3,000 deduction / 23,000 net; period/identity/print guards, no writes, current-data beforeprint, long safe text, notices and phone fit.
+6. `node tests/phase5-browser.cjs`: **11 scenarios passed**. Announcements/helper workflows, all six answer groups, failed inputs/saves, safe/long text, keyboard, account/history resets, scope and 390px controls.
+7. `node tests/phase6-browser.cjs`: **10 scenarios passed**. All seven pages plus setup/login captured at **1440, 834 and 390px** with no page overflow; active navigation and Menu Enter/Tab/Escape/focus. Covers invalid focus, open shift, long names/reasons, review/error/draft reopening, edit-mode/text-selection/focus/scroll/filter retention, deleted edit protection, selected payslip recalculation, saved/failed settings, empty startup/company/lists, reduced motion (initial/live), missing animation APIs/artwork, asset requests and subdirectory navigation. **64 browser scenarios total**, including 54 original regressions. No page JavaScript errors or unexpected broken asset responses in the passing runs.
+8. Sampled core body/muted/button/nav/status/placeholder contrast ratios: **14.83, 5.45, 5.17, 11.21, 6.09, 6.66, 6.55, 5.00** (all ≥4.5:1); input boundary **3.35:1**. This is token sampling plus screenshot/focus inspection, not a full WCAG conformance audit.
+9. `node --check` passed for all **21** app/tool/test JavaScript files. Seven-page/module inventory is asserted by the domain suite; six-key/empty-start/schema checks pass unchanged. `git diff --check` passed. Relative artwork/logo/favicon/styles/scripts/navigation were served under an isolated `/hcm-lite/` prefix as well as the root preview.
+
+Commands use bundled Node or `node` on PATH and the existing development-only Playwright package:
+
+```powershell
+$env:HCM_PLAYWRIGHT_MODULE='C:\Users\ALPHA\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs tests/phase5.test.cjs
+node tests/browser.cjs
+node tests/attendance-browser.cjs
+node tests/leaves-browser.cjs
+node tests/payroll-browser.cjs
+node tests/phase5-browser.cjs
+node tests/phase6-browser.cjs
+```
+
+### Visual and print inspection, iterations and limits
+
+Before editing, reran the Phase 5 browser suite (**11 passed**) and retained representative Admin desktop / Employee phone before captures in `qa/phase6/before/`. Inspected those plus the after captures/contact sheets for every page at desktop, tablet and 390px; separately inspected full settings/directory/leave views, phone dashboard section strips, helper/announcement content, empty artwork, errors, saved/failed feedback, open attendance, active leave review and provisional payslip. Captures are local ignored review evidence, not app assets; they use isolated fixtures rather than live company records. `qa/phase6/after/overview-{1440,834,390}.jpg` provides a review overview, with full-resolution per-page PNGs alongside.
+
+Rendered both `qa/phase6/after/final.pdf` and `provisional.pdf` through Poppler and inspected the resulting page PNGs; pypdf confirms **one A4 page each**. The fixture has 66,000 salary, 22 configured / 11 eligible joining-month days, 33,000 gross/net and zero deductions. Final retains proration; provisional additionally retains the unresolved 2026-09-17 shift notice. Identity, selected month, full breakdown/net/formula and all notices are readable, without clipping, hidden/transformed content or unrelated controls. Original payroll-suite A4 captures and print-media/guard assertions also pass. Browser Print invocation is tested with a stub; these are headless renders, not native OS dialog or actual user Save verification.
+
+Iterations were completed rather than treating the first pass as acceptance: kept attendance dates on one line, raised Employee current-shift controls, strengthened input/placeholder contrast, fixed the badge/text whitespace caught by the unchanged leave regression, guarded unavailable animation APIs/live observer callbacks, centralized motion timings and released finished animation handles. An early new QA fixture tried to create two open shifts for one employee and was correctly rejected; the fixture was corrected without changing validation. The live reduced-motion check now waits for the browser's media-change delivery before asserting zero active animations. None of those incomplete runs was counted as passing.
+
+No known remaining mandatory Phase 6 visual requirement or functional regression in the exercised scope. Limits: installed Edge/headless desktop and emulated viewports only; no physical phone/tablet, other browser, screen reader, comprehensive accessibility audit, native OS print/actual Save, large-data performance certification or Phase 7 acceptance claim. Existing browser-only identity/device clock/storage, current-settings history and single-editing-tab limitations remain. Very old joining dates can still produce long derived reports; the UI contains their scrolling but introduces no pagination or domain change. No publishing/repository/LMS deliverables were performed.
+
+**Stop for the user's Phase 6 screenshot review and manual commit/push. Phase 7 final acceptance remains separately authorized work.**
+
+Suggested commit message: `feat: add premium HCM Lite identity and responsive workspace UX`
+
+---
+
+## Phase 5 — historical completion record (superseded by Phase 6 above)
 
 Completed on 2026-10-25 under the attached request for Announcements and Keyword Smart Helper only. Read AGENTS.md, PLAN.md, PROGRESS.md, README.md, all four physical pages of the original PDF (text extraction; additionally inspected the rendered helper/scoring page), and existing modules/tests. Preserved the pre-existing uncommitted Phase 4 work. No commit, push, deploy, submission, framework, app backend, extra page/key, app seed data, external API, illustration, premium redesign or bonus was added. Phases 1–5 retain their numbering; Phase 6 premium UI/UX and Phase 7 final acceptance await separate authorization.
 

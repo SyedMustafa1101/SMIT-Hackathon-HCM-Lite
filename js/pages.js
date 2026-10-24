@@ -2,38 +2,51 @@
 (function () {
   'use strict';
   const UI = HCMUI, page = document.body.dataset.page;
-  let app, renderedAccount;
+  let app, renderedAccount, reviewDraft;
   function heading(title, description) {
-    UI.byId('content').append(UI.el('h1', title), UI.el('p', description, 'intro'));
+    const top = UI.el('div', undefined, 'workspace-line');
+    top.append(UI.el('span', app.currentUser().role === 'Admin' ? 'Workspace / Administration' : 'Workspace / My work'), UI.el('span', new Date().toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })));
+    const head = UI.el('div', undefined, 'page-heading'); head.append(UI.el('p', 'People. Work. In sync.', 'eyebrow'), UI.el('h1', title), UI.el('p', description, 'intro'));
+    UI.byId('content').append(top, head);
   }
   function index() {
     const setup = !app.getState().initialized;
+    const story = UI.el('aside', undefined, 'auth-story');
+    story.innerHTML = '<p class="eyebrow">A little structure. More possibility.</p><h2>Good work starts with your people.</h2><p>Bring your team, attendance and time off together. A calmer way to manage the everyday.</p>';
+    const art = UI.el('img', undefined, 'auth-art'); art.src = UI.asset('team-work.webp'); art.alt = ''; art.width = 800; art.height = 800; art.decoding = 'async';
+    art.addEventListener('error', () => { art.style.visibility = 'hidden'; }, { once: true });
+    story.append(art, UI.el('div', 'One workspace. A more organized day.', 'story-bottom'));
     const card = UI.el('section', undefined, `card auth-card ${setup ? '' : 'login-card'}`);
     card.innerHTML = setup ? `<h1>Set up your company</h1><p class="intro">Start with an empty workspace. Create your company and its Admin account, then add your employees.</p><p class="help">All fields are required. Choose your working days. Zero grace minutes and zero leave days are allowed.</p><form id="setup-form" novalidate>${UI.formNotice('auth-status')}<h2>Company & working rules</h2><div class="grid">${UI.companyFields()}</div><h2>Admin account</h2><div class="grid">${UI.field('name', 'Admin name', 'text', 'autocomplete="name" maxlength="120"')}${UI.field('email', 'Admin email', 'email', 'autocomplete="username" maxlength="254"')}${UI.field('password', 'Password (at least 8 characters)', 'password', 'autocomplete="new-password" minlength="8"')}${UI.field('confirmPassword', 'Confirm password', 'password', 'autocomplete="new-password" minlength="8"')}</div><div class="actions"><button type="submit">Create company & Admin</button></div></form>` : `<h1>Sign in</h1><p class="intro">Welcome back. Use your Admin account or the Employee login created by your Admin.</p><form id="login-form" novalidate>${UI.formNotice('auth-status')}<div class="grid">${UI.field('email', 'Email', 'email', 'autocomplete="username" maxlength="254"')}${UI.field('password', 'Password', 'password', 'autocomplete="current-password"')}</div><div class="actions"><button type="submit">Sign in</button></div></form><p class="help">Company setup is complete. Your Admin manages employee accounts and company settings.</p>`;
-    UI.byId('content').append(card);
-    const note = UI.el('p', 'Learning demonstration: accounts and data exist only in this browser. Browser-only authentication cannot protect real HR or payroll data. Use sample information you create yourself.', 'notice info auth-card'); UI.byId('content').append(note);
+    UI.byId('content').append(story, card);
+    const note = UI.el('p', 'Learning demonstration: accounts and data exist only in this browser. Browser-only authentication cannot protect real HR or payroll data. Use sample information you create yourself.', 'auth-note'); UI.byId('content').append(note);
     if (setup) UI.bindForm(UI.byId('setup-form'), UI.byId('auth-status'), async input => { await app.setup(input); render(); UI.message(UI.byId('auth-status'), 'Company created. Sign in with your new Admin account.'); });
     else UI.bindForm(UI.byId('login-form'), UI.byId('auth-status'), async input => { const role = await app.login(input); UI.go(role === 'Admin' ? 'admin' : 'employee'); });
   }
   function admin() {
     heading('Admin dashboard', 'Manage employees, settings, attendance, leave, payslips and announcements. Ask supported questions using the keyword helper.');
-    const card = UI.el('section', undefined, 'card'); card.innerHTML = `<h2>Manage your workspace</h2><p>Add an employee to create their login, or update the rules for your company.</p><div class="actions"><a class="button" href="employees.html">Manage employees</a><a class="button secondary" href="settings.html">Company settings</a></div>`; UI.byId('content').append(card);
-    attendanceView(true);
-    const leaveCard = UI.el('section', undefined, 'card'); leaveCard.innerHTML = '<h2>Company leave</h2><p id="leave-overview" role="status"></p><a href="leaves.html">Review leave requests</a>'; UI.byId('content').append(leaveCard);
+    const card = UI.el('section', undefined, 'card workspace-card'); card.innerHTML = `<h2>A well-organized team starts here.</h2><p>Add an employee to create their login, or keep your company rules up to date.</p><div class="actions"><a class="button" href="employees.html">Manage employees</a><a class="button secondary" href="settings.html">Company settings</a></div>`; UI.byId('content').append(card);
+    const leaveCard = UI.el('section', undefined, 'card leave-overview-card'); leaveCard.innerHTML = '<h2>Time off, in view</h2><p id="leave-overview" role="status"></p><a href="leaves.html">Review leave requests →</a>'; UI.byId('content').append(leaveCard);
     const totals = app.leaves.overview(); UI.byId('leave-overview').textContent = `${totals.pending} pending leave requests. ${totals.approvedToday} current employees on approved leave today (configured working dates only).`;
+    attendanceView(true);
     announcementsView(true); helperView();
   }
   function employees() {
-    heading('Employees', 'Create an employee and their login in one step. Search and department filters work together. All employee fields are required.');
+    heading('Employees', 'Your people, organized. Find a colleague or add an employee and their login in one step.');
     const editor = UI.el('section', undefined, 'card');
     editor.innerHTML = `<h2 id="editor-title">Add employee</h2><form id="employee-form" novalidate>${UI.formNotice('employee-status')}<div class="grid">${UI.field('name', 'Full name', 'text', 'autocomplete="off" maxlength="120"')}${UI.field('email', 'Email (login)', 'email', 'autocomplete="off" maxlength="254"')}${UI.field('password', 'Initial password (at least 8 characters)', 'password', 'autocomplete="new-password" minlength="8"')}${UI.field('department', 'Department', 'text', 'maxlength="100" list="department-suggestions"')}${UI.field('monthlySalary', 'Monthly salary', 'number', 'min="0.01" step="any" inputmode="decimal"')}${UI.field('joiningDate', 'Joining date', 'date')}</div><datalist id="department-suggestions"></datalist><p id="edit-help" class="help" hidden>Editing keeps the employee's ID and password. Employees change their own password after signing in.</p><div class="actions"><button id="employee-submit" type="submit">Add employee & create login</button><button id="cancel-edit" type="button" class="secondary" hidden>Cancel edit</button></div></form>`;
     const listing = UI.el('section', undefined, 'card');
     listing.innerHTML = `<h2>Employee directory</h2>${UI.formNotice('directory-status')}<div class="toolbar"><div><label for="search">Search name or email</label><input id="search" type="search" placeholder="Search employees" autocomplete="off"></div><div><label for="department-filter">Department</label><select id="department-filter"><option value="">All departments</option></select></div></div><p id="list-count" class="help" role="status"></p><p class="help">On smaller screens, scroll the table sideways to see all columns and actions.</p><div class="table-wrap" id="employee-table-wrap" role="region" aria-label="Employee directory, scroll horizontally for all columns" tabindex="0"><table><caption class="help">Employee accounts and salary details</caption><thead><tr><th scope="col">Name / email</th><th scope="col">Department</th><th scope="col">Monthly salary</th><th scope="col">Joining date</th><th scope="col">Actions</th></tr></thead><tbody id="employee-rows"></tbody></table></div><div id="directory-empty" class="empty" hidden></div>`;
-    UI.byId('content').append(editor, listing);
+    editor.id = 'employee-editor';
+    const add = UI.el('a', 'Add an employee', 'button'); add.href = '#employee-form'; add.addEventListener('click', event => { event.preventDefault(); if (UI.byId('employee-form').dataset.editingId) resetEditor(); UI.byId('name').focus(); });
+    const listingHead = UI.el('div', undefined, 'section-head'); listingHead.append(listing.querySelector('h2'), add); listing.prepend(listingHead);
+    UI.byId('content').append(listing, editor);
     const form = UI.byId('employee-form'); let editingId = null;
     function resetEditor() {
       editingId = null; form.reset(); UI.clearErrors(form); UI.byId('editor-title').textContent = 'Add employee';
+      delete form.dataset.editingId;
       UI.byId('employee-submit').textContent = 'Add employee & create login';
+      UI.byId('employee-submit').disabled = false;
       UI.byId('field-password').hidden = false; UI.byId('password').disabled = false;
       UI.byId('cancel-edit').hidden = true; UI.byId('edit-help').hidden = true;
     }
@@ -49,14 +62,16 @@
       const matches = app.employees(UI.byId('search').value, select.value), rows = UI.byId('employee-rows'); rows.replaceChildren();
       UI.byId('list-count').textContent = `${matches.length} matching / ${all.length} employee${all.length === 1 ? '' : 's'}`;
       UI.byId('employee-table-wrap').hidden = !matches.length; UI.byId('directory-empty').hidden = !!matches.length;
-      UI.byId('directory-empty').textContent = all.length ? 'No employees match this search and department. Change either filter to see more results.' : 'No employees yet. Add your first employee above to create their login.';
+      UI.byId('directory-empty').textContent = all.length ? 'No employees match this search and department. Change either filter to see more results.' : 'No employees yet. Add your first employee below to create their login.';
       matches.forEach(user => {
         const tr = UI.el('tr'), identity = UI.el('td'); identity.append(UI.el('strong', user.name), UI.el('div', user.email, 'muted')); tr.append(identity);
         tr.append(UI.el('td', user.department), UI.el('td', user.monthlySalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 20 })), UI.el('td', user.joiningDate));
         const actions = UI.el('div', undefined, 'actions'), td = UI.el('td');
         const edit = UI.el('button', 'Edit', 'secondary'); edit.type = 'button'; edit.setAttribute('aria-label', `Edit ${user.name}`);
+        edit.dataset.editEmployee = user.id;
         edit.addEventListener('click', () => {
           resetEditor(); editingId = user.id; UI.fill(form, { name: user.name, email: user.email, department: user.department, monthlySalary: user.monthlySalary, joiningDate: user.joiningDate });
+          form.dataset.editingId = user.id;
           UI.byId('password').value = ''; UI.byId('password').disabled = true; UI.byId('field-password').hidden = true;
           UI.byId('editor-title').textContent = 'Edit employee'; UI.byId('employee-submit').textContent = 'Save employee';
           UI.byId('cancel-edit').hidden = false; UI.byId('edit-help').hidden = false; UI.byId('employee-status').hidden = true; UI.byId('name').focus();
@@ -64,7 +79,7 @@
         const remove = UI.el('button', 'Delete', 'danger'); remove.type = 'button'; remove.setAttribute('aria-label', `Delete ${user.name}`);
         remove.addEventListener('click', () => {
           if (!window.confirm(`Delete ${user.name} (${user.email})? Their login will stop working. This cannot be undone.`)) return;
-          try { app.deleteEmployee(user.id); if (editingId === user.id) resetEditor(); refreshDirectory(); UI.message(UI.byId('directory-status'), 'Employee deleted. Their login is no longer available.'); }
+          try { app.deleteEmployee(user.id); if (editingId === user.id) resetEditor(); refreshDirectory(); UI.message(UI.byId('directory-status'), 'Employee deleted. Their login is no longer available.'); UI.byId('directory-status').focus(); }
           catch (error) { UI.message(UI.byId('directory-status'), error.message, 'error'); }
         });
         actions.append(edit, remove); td.append(actions); tr.append(td); rows.append(tr);
@@ -76,7 +91,7 @@
       resetEditor(); refreshDirectory();
       UI.message(UI.byId('employee-status'), edited ? 'Employee updated. Their existing password still works; use the updated email to sign in.' : 'Employee added. They can sign in with the email and initial password you entered.');
     });
-    UI.byId('cancel-edit').addEventListener('click', () => { resetEditor(); UI.byId('employee-status').hidden = true; });
+    UI.byId('cancel-edit').addEventListener('click', () => { resetEditor(); UI.byId('employee-status').hidden = true; UI.byId('name').focus(); });
     UI.byId('search').addEventListener('input', refreshDirectory); UI.byId('department-filter').addEventListener('change', refreshDirectory); refreshDirectory();
   }
   function settings() {
@@ -89,11 +104,12 @@
   }
   function employee() {
     const user = app.currentUser(); heading('My dashboard', 'Check in, check out, review attendance and manage your leave. Open My payslip for monthly salary calculations and printing.');
-    const card = UI.el('section', undefined, 'card'); card.append(UI.el('h2', 'My profile'));
+    const card = UI.el('section', undefined, 'card profile-card'); card.append(UI.el('h2', 'My profile'));
     const list = UI.el('dl');
     [['Name', user.name], ['Email', user.email], ['Department', user.department], ['Joining date', user.joiningDate], ['Monthly salary', user.monthlySalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 20 })]].forEach(([label, value]) => list.append(UI.el('dt', label), UI.el('dd', value)));
     card.append(list); UI.byId('content').append(card);
     attendanceView(false);
+    UI.byId('content').append(card);
     leaveView(false);
     announcementsView(false); helperView();
   }
@@ -148,6 +164,8 @@
     });
   }
   function attendanceView(isAdmin) {
+    const metrics = UI.el('section', undefined, 'dashboard-metrics'); metrics.id = 'dashboard-metrics'; metrics.setAttribute('aria-label', isAdmin ? 'Company overview' : 'My overview');
+    UI.byId('content').insertBefore(metrics, UI.byId('content').children[2] || null);
     const section = UI.el('section', undefined, 'card'); section.id = 'attendance-section';
     section.innerHTML = `<h2>${isAdmin ? 'Company attendance' : 'My attendance'}</h2><div id="attendance-overview" class="notice info"></div>${UI.formNotice('attendance-status')}
       ${isAdmin ? '' : '<div id="attendance-current" class="notice info"></div><div class="actions"><button id="check-in" type="button">Check in</button><button id="check-out" type="button" class="secondary">Check out</button></div>'}
@@ -160,6 +178,7 @@
       <div id="attendance-history" class="table-wrap" role="region" aria-label="Attendance history, scroll horizontally for all columns" tabindex="0"><table><caption>Saved attendance, derived absence and approved leave</caption><thead><tr>${isAdmin ? '<th scope="col">Employee</th>' : ''}<th scope="col">Date</th><th scope="col">Check-in</th><th scope="col">Check-out</th><th scope="col">Status</th><th scope="col">Late at check-in</th><th scope="col">Completed duration</th></tr></thead><tbody id="attendance-rows"></tbody></table></div>`;
     UI.byId('content').append(section);
     const filters = UI.byId('attendance-filters');
+    if (!isAdmin) { const current = UI.byId('attendance-current'); section.querySelector('h2').after(current, current.nextElementSibling); }
     filters.querySelectorAll('input').forEach(input => { input.required = false; });
     const today = HCM.localDate(); UI.fill(filters, { attendanceFrom: `${today.slice(0, 7)}-01`, attendanceTo: today });
     if (isAdmin) app.attendance.employeeOptions().forEach(user => { const option = UI.el('option', user.name); option.value = user.id; UI.byId('attendanceEmployee').append(option); });
@@ -170,6 +189,19 @@
     }
     function overview() {
       const view = app.attendance.overview(), summary = UI.byId('attendance-overview'); summary.replaceChildren();
+      const leave = app.leaves.overview(); metrics.replaceChildren();
+      const cards = isAdmin ? [
+        ['Total employees', view.employeeCount, 'Current employee accounts', 'employees'],
+        ['Check-ins today', view.daily.records, `${view.daily.open} open · ${view.daily.completed} completed`, 'employee'],
+        ['Late today', view.daily.late, 'Includes open and half-day shifts', 'employee'],
+        ['Pending leave', leave.pending, 'Requests awaiting your review', 'leaves']
+      ] : [
+        ['Completed hours', (view.monthly.durationMs / 3600000).toFixed(2), 'This month · unfinished shifts excluded', 'employee'],
+        ['Late check-ins', view.monthly.late, 'This month · includes half days', 'employee'],
+        ['Leave available', app.leaves.balance(HCM.localDate().slice(0, 4)).available, 'This year · after pending reservations', 'leaves'],
+        ['Pending leave', leave.pending, 'Your requests awaiting review', 'leaves']
+      ];
+      cards.forEach(args => metrics.append(UI.metric(...args)));
       if (isAdmin) summary.append(UI.el('p', `${view.employeeCount} current Employee account${view.employeeCount === 1 ? '' : 's'}.`));
       summary.append(UI.el('p', `Today (${view.today}): ${view.daily.records} check-ins, ${view.daily.open} open, ${view.daily.completed} completed, ${view.daily.late} late check-ins, ${view.daily.halfDays} half days, ${view.daily.approvedLeave} excused leave days without attendance.`));
       summary.append(UI.el('p', `This month (${view.month} through ${view.today}): ${view.monthly.absent} elapsed working-day absences, ${view.monthly.approvedLeave} approved leave days without attendance. Completed work: ${duration(view.monthly.durationMs)}.`));
@@ -194,13 +226,15 @@
       report.rows.forEach(record => {
         const tr = UI.el('tr');
         if (isAdmin) tr.append(UI.el('td', record.employeeName));
-        tr.append(UI.el('td', record.date), UI.el('td', record.checkIn ? new Date(record.checkIn).toLocaleString() : '—'), UI.el('td', record.checkOut ? new Date(record.checkOut).toLocaleString() : '—'), UI.el('td', record.derived ? `${record.status} (derived)` : record.status), UI.el('td', record.derived ? '—' : record.isLate ? 'Yes' : 'No'), UI.el('td', record.derived ? '—' : duration(record.durationMs))); rows.append(tr);
+        const status = UI.el('td'); status.append(UI.badge(record.status)); if (record.derived) status.append(UI.el('div', ' (derived)', 'muted'));
+        tr.append(UI.el('td', record.date, 'date-cell'), UI.el('td', record.checkIn ? new Date(record.checkIn).toLocaleString() : '—'), UI.el('td', record.checkOut ? new Date(record.checkOut).toLocaleString() : '—'), status, UI.el('td', record.derived ? '—' : record.isLate ? 'Yes' : 'No'), UI.el('td', record.derived ? '—' : duration(record.durationMs))); rows.append(tr);
       });
       UI.byId('attendance-history').hidden = !report.rows.length;
       UI.byId('attendance-empty').hidden = !!report.rows.length;
       UI.byId('attendance-empty').textContent = isAdmin && !app.attendance.employeeOptions().length ? 'No employees or attendance yet. Add an employee to begin.' : 'No attendance or elapsed working-day absences match these filters.';
     }
     function refresh() { overview(); history(); }
+    document.addEventListener('hcm-leave-updated', overview, { signal: viewController.signal });
     UI.bindForm(filters, UI.byId('attendance-filter-status'), () => { history(); });
     UI.byId('attendance-refresh').addEventListener('click', () => {
       UI.clearErrors(filters); UI.byId('attendance-filter-status').hidden = true;
@@ -225,16 +259,20 @@
       <p id="leave-count" role="status"></p><p class="help">History includes every year. Days use current working settings; a changed saved count is shown separately. Scroll the table sideways on small screens.</p><div id="leave-empty" class="empty" hidden></div><div id="leave-history" class="table-wrap" role="region" aria-label="Leave history, scroll horizontally for all columns" tabindex="0"><table><caption>Leave requests and Admin comments</caption><thead><tr>${isAdmin ? '<th scope="col">Employee</th>' : ''}<th scope="col">Type / dates</th><th scope="col">Working days</th><th scope="col">Reason</th><th scope="col">Status / submitted</th><th scope="col">Admin comment / review</th>${isAdmin ? '<th scope="col">Action</th>' : ''}</tr></thead><tbody id="leave-rows"></tbody></table></div>
       ${isAdmin ? `<section id="leave-review" hidden><h3 id="review-title"></h3><p id="review-days" class="notice info"></p><form id="review-form" novalidate>${UI.formNotice('review-status')}<div class="grid"><div class="field"><label for="reviewDecision">Decision</label><select id="reviewDecision" name="reviewDecision" required aria-describedby="error-reviewDecision"><option value="">Choose decision</option><option value="Approved">Approve</option><option value="Rejected">Reject</option></select><span id="error-reviewDecision" class="field-error"></span></div>${UI.field('reviewComment', 'Required Admin comment', 'text')}</div><div class="actions"><button type="submit">Save leave decision</button><button id="review-cancel" type="button" class="secondary">Cancel review</button></div></form></section>` : ''}`;
     UI.byId('content').append(section);
+    if (isAdmin) section.querySelector('h2').after(UI.byId('leave-review'));
     const filters = UI.byId('leave-filters'); let selectedReview = null;
     if (isAdmin) app.leaves.employeeOptions().forEach(user => { const option = UI.el('option', user.name); option.value = user.id; UI.byId('leaveEmployee').append(option); });
     function refreshBalance() {
       const b = app.leaves.balance(UI.byId('leaveYear').value);
       UI.byId('leave-balance').textContent = `${b.year}: Annual quota ${b.quota}. Approved ${b.approved} working days. Approved balance ${b.balance}. Pending ${b.pending} days reserved. Available to request ${b.available} days.`;
+      document.dispatchEvent(new Event('hcm-leave-updated'));
     }
     function openReview(record) {
       try {
         selectedReview = app.leaves.prepareReview(record.id);
         UI.byId('review-form').reset(); UI.clearErrors(UI.byId('review-form')); UI.byId('review-status').hidden = true;
+        UI.byId('review-form').dataset.reviewId = record.id;
+        if (reviewDraft?.id === record.id) UI.fill(UI.byId('review-form'), reviewDraft.values);
         UI.byId('review-title').textContent = `Review: ${record.employeeName} · ${record.type} · ${record.from} to ${record.to}`;
         const view = selectedReview;
         UI.byId('review-days').textContent = `Current working-day count: ${view.days}. Saved count: ${view.record.days}.${view.days !== view.record.days ? ' Settings changed the day count; approval will save the current count.' : ''}${view.approvalError ? ` Approval unavailable: ${view.approvalError} You may reject with a comment.` : ' Approval rechecks current employment, overlap and quota, including all pending reservations.'}`;
@@ -250,10 +288,11 @@
       records.forEach(record => {
         const tr = UI.el('tr');
         if (isAdmin) tr.append(UI.el('td', record.employeeName));
-        tr.append(UI.el('td', `${record.type}: ${record.from} to ${record.to}`), UI.el('td', `${record.currentDays}${record.currentDays !== record.days ? ` (saved ${record.days})` : ''}`), UI.el('td', record.reason), UI.el('td', `${record.status} · ${new Date(record.requestedAt).toLocaleString()}`), UI.el('td', record.reviewedAt ? `${record.comment} · ${new Date(record.reviewedAt).toLocaleString()}` : 'Awaiting Admin review'));
+        const status = UI.el('td'); status.append(UI.badge(record.status), UI.el('div', new Date(record.requestedAt).toLocaleString(), 'muted'));
+        tr.append(UI.el('td', `${record.type}: ${record.from} to ${record.to}`), UI.el('td', `${record.currentDays}${record.currentDays !== record.days ? ` (saved ${record.days})` : ''}`), UI.el('td', record.reason), status, UI.el('td', record.reviewedAt ? `${record.comment} · ${new Date(record.reviewedAt).toLocaleString()}` : 'Awaiting Admin review'));
         if (isAdmin) {
           const cell = UI.el('td', undefined, 'leave-actions');
-          if (record.status === 'Pending') { const button = UI.el('button', 'Review', 'secondary'); button.type = 'button'; button.setAttribute('aria-label', `Review ${record.employeeName} ${record.from} ${record.type}`); button.addEventListener('click', () => openReview(record)); cell.append(button); }
+          if (record.status === 'Pending') { const button = UI.el('button', 'Review', 'secondary'); button.type = 'button'; button.dataset.reviewLeave = record.id; button.setAttribute('aria-label', `Review ${record.employeeName} ${record.from} ${record.type}`); button.addEventListener('click', () => openReview(record)); cell.append(button); }
           else cell.textContent = 'Finalized';
           tr.append(cell);
         }
@@ -266,11 +305,16 @@
       catch (error) { UI.message(UI.byId('leave-filter-status'), error.message, 'error'); }
     });
     if (isAdmin) {
-      UI.byId('review-cancel').addEventListener('click', () => { selectedReview = null; UI.byId('leave-review').hidden = true; });
+      UI.byId('review-cancel').addEventListener('click', () => {
+        const id = selectedReview?.record.id; selectedReview = null; reviewDraft = null; UI.byId('leave-review').hidden = true;
+        const buttons = [...UI.byId('leave-rows').querySelectorAll('button')];
+        const button = id && buttons.find(b => b.dataset.reviewLeave === id);
+        if (button) button.focus(); else UI.byId('leaveFilterStatus').focus();
+      });
       UI.bindForm(UI.byId('review-form'), UI.byId('review-status'), input => {
         if (!selectedReview) throw new Error('Open a pending request for review first.');
         const result = app.leaves.review(selectedReview.record.id, { token: selectedReview.token, status: input.reviewDecision, comment: input.reviewComment });
-        selectedReview = null; history(); UI.byId('leave-review').hidden = true;
+        selectedReview = null; reviewDraft = null; history(); UI.byId('leave-review').hidden = true;
         UI.message(UI.byId('leave-filter-status'), `Leave ${result.status.toLowerCase()}. Comment and decision saved.`); UI.byId('leave-filter-status').focus();
       });
     } else {
@@ -346,7 +390,7 @@
     }
     print.addEventListener('click', () => { if (refreshForPrint()) window.print(); });
     // Revalidate native Ctrl+P too; never print a stale account or old saved-data calculation.
-    window.addEventListener('beforeprint', () => { if (article.isConnected) refreshForPrint(); });
+    window.addEventListener('beforeprint', () => { if (article.isConnected) refreshForPrint(); }, { signal: viewController.signal });
     if (!isAdmin) calculate();
   }
   function guard() {
@@ -355,16 +399,75 @@
     return true;
   }
   function fatal(error) {
+    UI.cleanup(); viewController.abort(); reviewDraft = null;
+    document.body.classList.remove('authenticated');
     UI.byId('content').replaceChildren(); UI.byId('header').replaceChildren();
     UI.message(UI.byId('fatal'), error.message || 'Unable to load HCM Lite. Existing browser data was not reset.', 'error');
   }
-  function render() {
+  let viewController = new AbortController();
+  function captureView() {
+    const active = document.activeElement;
+    if (UI.byId('leave-review') && !UI.byId('leave-review').hidden) reviewDraft = { id: UI.byId('review-form').dataset.reviewId, values: UI.values(UI.byId('review-form')) };
+    return {
+      fields: [...document.querySelectorAll('#content input, #content select, #content textarea')].map(n => ({ id: n.id, name: n.name, value: n.value, checked: n.checked, type: n.type })),
+      editingId: UI.byId('employee-form')?.dataset.editingId,
+      details: [...document.querySelectorAll('#content details[open]')].map(n => n.id).filter(Boolean),
+      errors: [...document.querySelectorAll('#content .field-error')].filter(n => n.textContent).map(n => [n.id, n.textContent]),
+      notices: [...document.querySelectorAll('#content .notice.error:not([hidden])')].map(n => [n.id, n.textContent]),
+      focus: active.id, selection: typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd] : null,
+      scroll: [scrollX, scrollY], regions: [...document.querySelectorAll('.table-wrap, #helper-history')].map(n => [n.id, n.scrollLeft, n.scrollTop]),
+      payrollVisible: UI.byId('payslip') && !UI.byId('payslip').hidden,
+      menu: UI.byId('menu-toggle')?.getAttribute('aria-expanded') === 'true'
+    };
+  }
+  function restoreView(saved) {
+    if (saved.editingId) {
+      const edit = [...document.querySelectorAll('[data-edit-employee]')].find(n => n.dataset.editEmployee === saved.editingId);
+      if (edit) edit.click();
+      else {
+        UI.byId('employee-submit').disabled = true; UI.byId('cancel-edit').hidden = false;
+        UI.message(UI.byId('employee-status'), 'This employee is no longer available. Your draft is retained; cancel editing before adding another employee.', 'error');
+      }
+    }
+    saved.fields.forEach(f => {
+      const node = f.id ? UI.byId(f.id) : [...document.querySelectorAll('input')].find(n => n.name === f.name && n.value === f.value);
+      if (!node) return;
+      if (f.type === 'checkbox') node.checked = f.checked; else node.value = f.value;
+    });
+    saved.details.forEach(id => { if (UI.byId(id)) UI.byId(id).open = true; });
+    // Restore view-only filters against fresh data, without saving or reusing stale results.
+    UI.byId('search')?.dispatchEvent(new Event('input'));
+    for (const id of ['attendance-filters', 'leave-filters', 'leave-balance-form']) UI.byId(id)?.requestSubmit();
+    UI.byId('leave-form')?.dispatchEvent(new Event('input'));
+    if (UI.byId('payroll-form')) {
+      UI.byId('payroll-form').dispatchEvent(new Event('change'));
+      if (saved.payrollVisible) UI.byId('payroll-form').requestSubmit();
+    }
+    saved.errors.forEach(([id, text]) => { const node = UI.byId(id); if (node && !id.startsWith('error-review')) { node.textContent = text; const field = UI.byId(id.replace('error-', '')); field?.setAttribute('aria-invalid', 'true'); } });
+    saved.notices.forEach(([id, text]) => { if (id && UI.byId(id) && id !== 'review-status') UI.message(UI.byId(id), text, 'error'); });
+    if (saved.menu && UI.byId('menu-toggle') && matchMedia('(max-width: 960px)').matches) UI.byId('menu-toggle').click();
+    if (reviewDraft && UI.byId('leave-filter-status')) UI.message(UI.byId('leave-filter-status'), 'Review data changed. Reopen the request to review current days. Your comment draft is retained.', 'info');
+    const focus = UI.byId(saved.focus);
+    if (focus && focus.getClientRects().length) { focus.focus({ preventScroll: true }); if (saved.selection && focus.setSelectionRange) focus.setSelectionRange(...saved.selection); }
+    else if (reviewDraft) UI.byId('leave-filter-status')?.focus({ preventScroll: true });
+    saved.regions.forEach(([id, x, y]) => { const n = UI.byId(id); if (n) { n.scrollLeft = x; n.scrollTop = y; } });
+    window.scrollTo(...saved.scroll);
+  }
+  function render(preserve = false) {
     try {
       if (!guard()) return;
+      const sameAccount = (app.currentUser()?.id || null) === renderedAccount;
+      const saved = preserve && sameAccount ? captureView() : null;
+      if (!sameAccount) reviewDraft = null;
+      UI.cleanup(); viewController.abort(); viewController = new AbortController();
       renderedAccount = app.currentUser()?.id || null;
       UI.byId('fatal').hidden = true; UI.byId('content').replaceChildren(); UI.header(app, page);
       ({ index, admin, employees, settings, employee, leaves, payslip })[page]();
       if (page !== 'index') UI.passwordPanel(app);
+      const symbols = { 'attendance-section': 'employee', 'leave-section': 'leaves', 'announcements-section': 'leaves', 'helper-section': 'settings' };
+      Object.entries(symbols).forEach(([id, symbol]) => { const h = UI.byId(id)?.querySelector('h2'); if (h) { const wrap = UI.el('span', undefined, 'section-icon'); wrap.append(UI.icon(symbol)); h.prepend(wrap); } });
+      UI.enhance();
+      if (saved) restoreView(saved);
     } catch (error) { fatal(error); }
   }
   try {
@@ -373,7 +476,7 @@
     try { adapter = window.localStorage; }
     catch (_) { throw new HCMStorage.StorageError('Browser storage is unavailable. Allow site storage and try again.'); }
     app = HCM.create(HCMStorage.create(adapter)); render();
-    window.addEventListener('storage', event => { if (event.key === null || Object.values(HCMStorage.keys).includes(event.key)) render(); });
+    window.addEventListener('storage', event => { if (event.key === null || Object.values(HCMStorage.keys).includes(event.key)) render(true); });
     window.addEventListener('pageshow', event => { if (event.persisted) render(); });
     window.addEventListener('focus', () => { try { if ((app.currentUser()?.id || null) !== renderedAccount) render(); else guard(); } catch (error) { fatal(error); } });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { try { if ((app.currentUser()?.id || null) !== renderedAccount) render(); } catch (error) { fatal(error); } } });

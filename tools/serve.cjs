@@ -5,6 +5,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const files = new Set(['index.html', 'pages/admin.html', 'pages/employees.html', 'pages/leaves.html', 'pages/settings.html', 'pages/employee.html', 'pages/payslip.html', 'css/style.css', 'js/storage.js', 'js/attendance.js', 'js/leaves.js', 'js/payroll.js', 'js/announcements.js', 'js/helper.js', 'js/hcm.js', 'js/ui.js', 'js/pages.js']);
+for (const name of ['logo.svg', 'favicon.svg', 'team-work.webp', 'empty-work.webp']) files.add(`assets/${name}`);
 function createServer() {
   return http.createServer(async (request, response) => {
     let file;
@@ -13,8 +14,8 @@ function createServer() {
     if (!['GET', 'HEAD'].includes(request.method) || !files.has(file)) { response.writeHead(404); response.end('Not found'); return; }
     try {
       const body = await fs.readFile(path.join(root, file));
-      const type = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript' }[path.extname(file)];
-      response.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+      const type = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.webp': 'image/webp' }[path.extname(file)];
+      response.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
       response.end(request.method === 'HEAD' ? undefined : body);
     } catch (_) { response.writeHead(500); response.end('Unable to read static file'); }
   });

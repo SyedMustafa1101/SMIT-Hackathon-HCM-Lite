@@ -1,4 +1,4 @@
-# Saylani HCM Lite — Phases 1–5
+# Saylani HCM Lite — Phases 1–6
 
 Plain HTML, CSS and JavaScript; browser localStorage only. No app dependencies, framework, backend, external API, or demo data. Seven HTML pages, as specified. The Node tool below is an optional static file preview, not an application backend. Any ordinary static host can serve the same files unchanged.
 
@@ -107,7 +107,7 @@ Suggested walkthrough: Admin posts an announcement and asks the three company qu
 
 This is a browser-only learning demonstration. It cannot protect real HR, payroll or personal information: anyone with browser developer tools can read or change localStorage, change scripts or bypass role checks. Passwords are stored as salted PBKDF2-SHA256 hashes (100,000 iterations) rather than plaintext, but hashing does not turn browser-only accounts into secure authentication. There is no server, password recovery, shared storage across devices, or email delivery. Clearing site data removes all accounts and records.
 
-`hcm_session` contains only `{ "userId": "…" }`. Every protected page resolves it against current `hcm_users`; removed accounts cannot keep using their session. Admin pages are `admin`, `employees`, `leaves`, `settings`; `employee` is Employee-only; `payslip` is accessible by either authenticated role, with Admin all / Employee own service scope. Cross-tab sign-in/data changes re-check and render the current state; this may discard an unsaved form. localStorage does not provide transactions across tabs; use one editing tab at a time. Writes are validated and multi-key setup attempts roll back on write failure, but browser crashes and simultaneous writers are not atomic transactions.
+`hcm_session` contains only `{ "userId": "…" }`. Every protected page resolves it against current `hcm_users`; removed accounts cannot keep using their session. Admin pages are `admin`, `employees`, `leaves`, `settings`; `employee` is Employee-only; `payslip` is accessible by either authenticated role, with Admin all / Employee own service scope. Cross-tab sign-in/data changes re-check current state. Same-account refreshes retain form drafts, edit identity, filters, focus/selection and scroll; account changes/errors clear privileged content and drafts. Helper history clears on storage rerenders. Changed leave reviews close and must be explicitly reopened with current counts (their comment draft stays in memory). Payslip selections recalculate, never reuse old figures. A deleted employee's retained edit draft cannot create a new account. localStorage does not provide transactions across tabs; use one editing tab at a time. Writes are validated and multi-key setup attempts roll back on write failure, but browser crashes and simultaneous writers are not atomic transactions.
 
 The six keys are `hcm_company`, `hcm_users`, `hcm_attendance`, `hcm_leaves`, `hcm_session`, `hcm_announcements`. Other storage keys are untouched. `js/storage.js` handles persistence/structure checks; `js/hcm.js` handles accounts/settings/access and composes `js/attendance.js`, `js/leaves.js`, `js/payroll.js`, `js/announcements.js` and `js/helper.js`; `js/ui.js` provides shared UI; `js/pages.js` wires page events. Local calendar dates are used for joining/leave dates; IDs use cryptographic random bytes. User text is rendered with DOM `textContent`/`value`. Salary is stored as a positive number in the company's chosen currency (no currency assumption).
 
@@ -127,10 +127,32 @@ node tests/attendance-browser.cjs
 node tests/leaves-browser.cjs
 node tests/payroll-browser.cjs
 node tests/phase5-browser.cjs
+node tests/phase6-browser.cjs
 ```
 
 If Playwright is not on Node's module path, set `HCM_PLAYWRIGHT_MODULE` to the absolute directory of an already installed Playwright package. It uses installed Microsoft Edge by default; set `HCM_BROWSER_CHANNEL=chrome` to use an installed Chrome instead. These tools are for verification only; the app runs without them. The browser suite launches a temporary static server and fresh browser contexts, creates its own temporary records and destroys the contexts on completion. It never seeds app source or your normal browser profile.
 
 Automated checks and manual screenshot inspection are distinguished in PROGRESS.md. Browser tests use installed Edge and an emulated 390px phone viewport, not physical phones. The payroll suite captures temporary final/provisional A4 PDFs and screenshots under the system temp directory. These use headless browser rendering; print invocation is stubbed for verification. The native OS dialog and actual user Save action are untested. All test records are isolated fixtures, not delivered app data.
 
-See AGENTS.md for permanent guidance, PLAN.md for the PDF checklist and PROGRESS.md for exact verification. Phases 1–5 are complete; Phase 5 is paused for review/manual commit/push. Next only after authorization: Phase 6 premium UI/UX, then Phase 7 final acceptance. Do not begin those phases, commit, push, deploy or submit automatically.
+## Phase 6 — People. Work. In sync.
+
+The seven existing pages share a light workspace, navy navigation, blue primary actions, green accents and semantic statuses. The desktop sidebar becomes a compact **Menu** on tablets/phones. Activate it with Enter/Space; Tab reaches links; Escape closes it and returns focus. Password/logout stay visible. Wide histories scroll inside their own regions (including vertically for long lists) with sticky column headings. The employee directory comes first; **Add an employee** focuses the form below it, and Edit opens that same form. Deletion still uses the browser's confirmation dialog.
+
+Setup/login use a split editorial illustration and focused form. Setup/settings group company identity, attendance schedule/working days and shared leave allowance. Dashboards show real current data in summary cards; Employee shift state/actions lead attendance. Announcements and helper history have dedicated readable surfaces. Leave review appears above history, with explicit day counts and inline comment/decision validation. Payslips use a document layout, clear net total and prominent provisional/proration notices; existing A4 print/Save-as-PDF rules remain.
+
+`css/style.css` defines shared color, typography (Segoe UI/system fallbacks), spacing, radii, shadows, layers and motion tokens. No font CDN, UI framework or runtime package was added. GSAP is not clearly authorized by the PDF, which names HTML/CSS/JavaScript and optional Chart.js. Motion uses CSS feedback and IntersectionObserver/native Web Animations: restrained entrances, 35ms card staggers capped at 105ms, finite artwork settling and brief notice fades. Content starts visible, no numbers count up, and whole views do not replay after rerenders. Reduced motion disables nonessential movement, including live preference changes; absent animation APIs leave the content usable. Observers/listeners/animations are cleaned up across rerenders, pagehide and printing. There is no perpetual animation, scroll smoothing or scroll hijacking.
+
+Local asset inventory (no external requests at runtime):
+
+| File | Purpose | Dimensions / size |
+| --- | --- | --- |
+| `assets/logo.svg` | Code-native H mark with a green connecting bridge; text wordmark uses the system font | 40×40 viewBox, 261 bytes |
+| `assets/favicon.svg` | Matching mark for all seven pages | 40×40 viewBox, 261 bytes |
+| `assets/team-work.webp` | Actual generated editorial teamwork scene on setup/login | 800×800, 49,772 bytes |
+| `assets/empty-work.webp` | Actual generated document-tray empty-state artwork | 240×240, 1,700 bytes |
+
+Both generated originals were visually inspected before local WebP optimization. They contain no baked UI text, statistics or employee portraits. The auth image has explicit dimensions/empty alt; empty-state imagery is a decorative CSS background with reserved space. Missing artwork retains the layout and readable instructions. Relative asset/navigation paths support static subdirectory hosting; `tools/serve.cjs` serves the four assets with correct MIME types. Image generation was a development step, never an app API.
+
+The focused Phase 6 browser suite writes isolated screenshots and final/provisional PDFs under ignored `qa/phase6/after/`; representative before captures are under `qa/phase6/before/`. These files are not served by the app or committed automatically. Exact browser results, visual inspection and limits are recorded in PROGRESS.md. Emulated layouts and headless A4 rendering are not physical-device, screen-reader or native OS print verification.
+
+See AGENTS.md for permanent guidance, PLAN.md for the PDF checklist and PROGRESS.md for the current handoff. Phases 1–6 are complete with 71 domain tests and 64 browser scenarios passing. Phase 6 is paused for screenshot review/manual commit/push. Phase 7 final acceptance needs separate authorization. Do not commit, push, deploy or submit automatically.
