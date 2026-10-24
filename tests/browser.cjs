@@ -105,14 +105,14 @@ const { chromium } = require(process.env.HCM_PLAYWRIGHT_MODULE || 'playwright');
     assert.ok((await page.locator('#content dl').innerText()).includes('Alex Revised'));
     assert.equal(await page.getByRole('link', { name: 'Employees', exact: true }).count(), 0);
     for (const name of ['admin', 'employees', 'leaves', 'settings']) { await page.goto(`${base}/pages/${name}.html`); await page.waitForURL('**/pages/employee.html'); }
-    await page.goto(`${base}/pages/payslip.html`); await text(page, 'h1', /My payslip/); await text(page, '#content', /not available yet/);
+    await page.goto(`${base}/pages/payslip.html`); await text(page, 'h1', /My payslip/); await text(page, '#payslip', /Monthly calculation breakdown/);
     await page.goto(`${base}/pages/employee.html`); await page.reload(); assert.ok((await page.locator('#content dl').innerText()).includes('Alex Revised'));
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Employee dashboard fits mobile');
     await changePassword(page, 'Employee-Test-123', 'Employee-New-456'); await logout(page);
     await fill(page.locator('#login-form'), { email: 'revised@example.test', password: 'Employee-Test-123' }); await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await text(page, '#auth-status', /incorrect/);
     await login(page, 'revised@example.test', 'Employee-New-456', 'employee'); await logout(page);
-    pass('Employee usable edited login, all Admin-page redirects, own profile/payslip placeholder, password change and logout');
+    pass('Employee usable edited login, all Admin-page redirects, own profile/payslip, password change and logout');
 
     await login(page, 'admin@example.test', 'Admin-New-456', 'admin'); await page.goto(`${base}/pages/employees.html`);
     page.once('dialog', dialog => dialog.dismiss()); await page.getByRole('button', { name: 'Delete Alex Revised', exact: true }).click(); assert.equal(await page.locator('#employee-rows tr').count(), 3);

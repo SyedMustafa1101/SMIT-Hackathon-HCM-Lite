@@ -6,7 +6,7 @@ The workspace was inspected before implementation on 2026-10-24. It contained on
 
 The PDF defines product behavior. Its instructions to host and submit describe eventual hackathon deliverables; they do not authorize this agent to deploy, submit, commit, or push. The user's explicit phase boundary and prohibition on those actions govern this work. Optional cover imagery, figures, Chart.js, LLM access, camera, location, and face detection are not mandatory requirements. PDF folder names are suggestions; the user's exact seven-page paths govern.
 
-Use plain HTML, CSS, JavaScript, and localStorage only. No framework, backend, database service, external AI API, seeded accounts, or demo records. Mandatory behavior precedes polish. No charts, animation, dark mode, camera/location, or face detection. Work locally; do not deploy, submit, commit, or push. Stop after each authorized milestone for the user to commit and push. Current milestone: Phase 3 complete, paused for review. Repeat verification, documentation, report, suggested commit message, and pause at each phase.
+Use plain HTML, CSS, JavaScript, and localStorage only. No framework, backend, database service, external AI API, seeded accounts, or demo records. Mandatory behavior precedes polish. No charts, animation, dark mode, camera/location, or face detection. Work locally; do not deploy, submit, commit, or push. Stop after each authorized milestone for the user to commit and push. Current milestone: Phase 5 complete, paused for review. Repeat verification, documentation, report, suggested commit message, and pause at each phase.
 
 ## Mandatory requirements checklist
 
@@ -44,12 +44,12 @@ Verified on 2026-10-24: 14 domain tests and 14 isolated Edge browser scenarios p
 - [x] Leave From <= To; count configured working days only, skip nonworking days; no pending/approved overlapping ranges; cannot exceed Admin's shared yearly quota with pending reservations; approved leave updates balance.
 - [x] Admin current employee total/today's attendance and Employee personal attendance summaries (#10). All figures derived from real records, no seeded data.
 - [x] Pending-leave dashboard totals and personal balance (#10), plus company approved-leave-today summary.
-- [ ] Monthly payslip: Admin all / Employee own (#11), with print and browser Save as PDF.
-- [ ] Payslip per-day = monthly salary / configured working days in selected month; deduction = per-day × (absent days + 0.5 × half days); net = monthly salary − deduction. Resolve any zero-working-day month and approved-leave interpretation explicitly at that phase rather than silently inventing rules.
-- [ ] Small helper chat on both dashboards: keyword matching with JavaScript and real app data, Admin all data / Employee own only (#12). No external AI API under user constraints.
-- [ ] Required Admin helper questions: employee count; who is on approved leave covering today; who was late today.
-- [ ] Required Employee helper questions: own leaves left (quota minus own approved leave days); was I late today; own hours worked this week.
-- [ ] Announcements: Admin posts, Employee reads (#13); stored in `hcm_announcements` per the user's explicit additional key.
+- [x] Monthly payslip: Admin all / Employee own (#11), with print and browser Save as PDF.
+- [x] Payslip per-day = monthly salary / configured working days in selected month; deduction = per-day × (absent days + 0.5 × half days); net = monthly salary − deduction for a fully eligible month. Explicit joining proration, current-month projection, approved paid leave, open-shift and zero-working-day decisions supplement this formula (below and AGENTS.md).
+- [x] Small helper chat on both dashboards: keyword matching with JavaScript and real app data, Admin all data / Employee own only (#12). No external AI API under user constraints.
+- [x] Required Admin helper questions: employee count; who is on approved leave covering today; who was late today.
+- [x] Required Employee helper questions: own leaves left (quota minus own approved leave days); was I late today; own hours worked this week.
+- [x] Announcements: Admin posts, Employee reads (#13); stored in `hcm_announcements` per the user's explicit additional key.
 - [x] Responsive phone design and clear forms/errors; organized reusable code; clear walkthrough and README explaining available app use (sections 1 and 7). Dedicated premium design is Phase 6; final cross-workflow audit is Phase 7.
 - [ ] Eventual hosted link plus GitHub repository link and LMS submission (sections 1 and 7): deferred to the user; this session must not deploy or submit.
 
@@ -60,12 +60,12 @@ PDF role matrix #01–05 and storage section 4 are covered by the Phase 1 checkl
 1. **Foundation and administration — complete:** seven pages, shared UI, validated storage, empty setup, accounts/session/roles/password changes, employee CRUD/search/filter, company settings, reserved-workflow states. Verified in isolated tests; both planning documents updated. Stopped for the user's commit/push.
 2. **Attendance — complete:** one daily Employee check-in, checkout prerequisite, late/grace and under-five-hour half-day rules, configured working-day absence and hours, Admin all / Employee own records/filters, real summaries. Strict validation and explicit nonworking/overnight policies; verified boundaries, persistence, errors, scope and Phase 1 regressions. Paused for user review/commit/push.
 3. **Leave management — complete:** Employee requests/preview/status/history/yearly balance, Admin filters/review/comments, strict storage and role scope, pending quota reservations, current-settings/stale-review validation, real dashboard leave totals and approved-leave absence integration. Verified with isolated domain/browser tests; paused for user review/commit/push.
-4. **Payroll and payslips:** implement the PDF monthly per-day/deduction/net formula, Admin all / Employee own selection and print / Save as PDF. Verify month/day cases, figures, print layout and access, update docs and pause.
-5. **Announcements and keyword helper:** implement Admin posting / Employee reading and dashboard keyword chats covering all six PDF question groups using role-scoped real data. Verify safe rendering and coverage, update docs and pause.
+4. **Payroll and payslips — complete:** reusable read-only payroll module, PDF formula, Admin all / Employee own, month/year selection, current-settings derivation, joining proration/current-month projection, approved paid leave and unresolved-shift notices, browser print / Save as PDF. Domain/browser regressions and A4 output verified; paused for review/manual commit/push.
+5. **Announcements and keyword helper — complete:** Admin posts validated announcements; both dashboards read newest first. Memory-only keyword chats answer all six required question groups from fresh role-scoped data. Storage/save errors, safe rendering, account changes, keyboard and phone layouts verified; paused for review/manual commit/push.
 6. **Dedicated premium UI/UX:** after mandatory workflows pass, establish consistent design tokens, responsive layouts, accessible interactions, reduced-motion support and suitable generated illustrations when available. Verify behavior remains intact; update docs and pause. This stage is explicitly reserved, not part of Phase 2.
 7. **Final acceptance:** compare every PDF requirement and user constraint, test all cross-workflow behavior, persistence, roles, accessibility/responsiveness, errors and empty first run after the design stage. Update README/demo and final checklist; pause. No automatic deployment/submission.
 
-Phases 1–3 are complete. The user's Phase 3 authorization superseded earlier stop wording. Implement nothing from phases 4–7 until separately authorized. User commits and pushes after each phase; the agent supplies a suggested commit message and pauses.
+Phases 1–5 are complete. The user's Phase 5 authorization superseded earlier stop wording. Implement nothing from phases 6–7 until separately authorized. User commits and pushes after each phase; the agent supplies a suggested commit message and pauses.
 
 ## Phase 2 policies and acceptance (recorded before calculations)
 
@@ -83,7 +83,7 @@ Absence uses current working days and joining dates, only before today. Phase 2 
 
 ## Phase 3 policies and acceptance
 
-The permanent decisions in AGENTS.md govern leave: one shared annual quota; pending reservations; inclusive current working days; same-year requests on/after joining; pending/approved calendar overlap only; rejected replacements allowed. Past dates are allowed. Settings recalculate all balances (negative values are shown), while saved days retain an audit snapshot and are updated on approval. Admin must view current counts before approval and reopen stale reviews. After quota reduction, all pending reservations must fit before approval; reject excess requests or adjust settings first. Finalized decisions are immutable. Deleted requests remain filterable by ID and may be rejected, never newly approved. Approved working dates are paid/excused for future payroll; actual attendance always takes precedence. Payroll remains Phase 4.
+The permanent decisions in AGENTS.md govern leave: one shared annual quota; pending reservations; inclusive current working days; same-year requests on/after joining; pending/approved calendar overlap only; rejected replacements allowed. Past dates are allowed. Settings recalculate all balances (negative values are shown), while saved days retain an audit snapshot and are updated on approval. Admin must view current counts before approval and reopen stale reviews. After quota reduction, all pending reservations must fit before approval; reject excess requests or adjust settings first. Finalized decisions are immutable. Deleted requests remain filterable by ID and may be rejected, never newly approved. Approved working dates are paid/excused in Phase 4 payroll; actual attendance always takes precedence.
 
 - [x] Employee own request, working-day preview, status/comment history and selected-year approved/pending/available balance.
 - [x] Admin all requests, combined employee/status filters, comment-required approval/rejection and updated count display.
@@ -97,4 +97,29 @@ Verified on 2026-10-25: 43 domain tests and 34 isolated Edge browser scenarios p
 
 ## Verification approach
 
+### Phase 4 acceptance and implementation decisions (historical milestone)
+
+The PDF's full-month formula is unchanged. Current saved salary/settings/joining date determine history; there are no snapshots. The denominator is all configured working days in the month. Joining-month gross is daily rate × eligible working days; before-joining entitlement is zero. Current-month gross projects the full eligible month, with only elapsed absence/completed half-day deductions. Future slips are unavailable. Open eligible working-day shifts prevent final status for their starting month. Actual attendance wins over paid approved leave; late alone and nonworking attendance have no deduction/extra pay. Full precision is retained and currency displays use two decimals. Zero working days is Cannot calculate; normal valid settings cannot produce it, so the guard is tested through injected state without relaxing storage validation.
+
+- [x] Reusable payroll service with current-session authorization, Admin existing employee / Employee own, unavailable-user/invalid-period/storage errors and no writes.
+- [x] Full-month 26,000 / 26 / 2 absent / 2 half-days = 3,000 deduction and 23,000 net; zero/all absence, half-day, late-only, paid/pending/rejected/overlap and nonworking cases.
+- [x] Custom weeks, leap February, year/month boundaries, joining/before-joining/current/future/zero-working-day cases and open/overnight shifts.
+- [x] Selected slip with all calculation fields, explicit projection/proration/unresolved notices, safe user text and empty states; refresh and print revalidation.
+- [x] Browser button/selection/access/error/mobile checks and Phase 1–3 regressions. A4 final/provisional PDF capture, text extraction and rendered-page inspection; native OS dialog and actual user Save action are untested.
+- [x] Update AGENTS.md/PLAN.md/PROGRESS.md/README.md; stop for manual commit/push. No Phase 5–7 work.
+
+Verified on 2026-10-25: 55 domain tests (43 regressions + 12 payroll), 43 isolated Edge browser scenarios (34 regressions + 9 payroll), syntax and inventory checks passed. PROGRESS.md has exact commands and verification limits.
+
 Use Node's built-in test runner with isolated in-memory localStorage for domain/storage tests; use a temporary browser origin/context for UI verification if browser tooling is available. Do not seed application source or the user's normal browser origin. Verify page inventory and syntax, required workflows and invalid inputs, stale/deleted sessions, malformed storage, denied writes and no overwrite on repeat setup. Record exact commands/results and remaining verification limits in PROGRESS.md.
+
+## Phase 5 policies and mandatory-feature checkpoint
+
+- [x] Focused announcement/helper services, existing composition/loaders/static allowlist; seven pages, six keys and empty startup preserved.
+- [x] Admin-only title/message posting, newest-first reading on both dashboards, strict exact record shape, safe rendering, inline required errors, preserved records/inputs after failed writes.
+- [x] Admin current employee count, approved working-day coverage today for current employees on/after joining, and saved late flags including half-day/open/deleted records. Coverage is reported even with actual attendance. Nonworking days are stated.
+- [x] Employee own current-year approved balance/pending reservations/available days, saved late flag or honest no-check-in, completed Monday–Sunday hours by starting date, open shifts excluded and disclosed.
+- [x] Case/whitespace/punctuation variations, specific whole-question keyword patterns, supported-question fallback for unknown/mixed/other-role requests; no external API or raw record output.
+- [x] Current identity/data on every service call, cross-employee denial, memory-only history cleared on account changes/errors; anonymous/deleted/stale/malformed/unavailable cases verified.
+- [x] Required numeric fixtures, edge cases, browser workflow/keyboard/390px checks and relevant Phase 1–4 regressions; no app source fixtures. See PROGRESS.md for exact results and limits.
+
+Rechecked PDF sections 1–5 and 7: setup/accounts/settings and employee administration (Phase 1), attendance (Phase 2), leave (Phase 3), dashboards/payroll/print (Phases 2–4), announcements/helper (Phase 5), readable phone UI, reusable code and README/walkthrough are implemented with automated verification. No known remaining mandatory functional gap in the authorized implementation. Native OS printing/actual user Save, physical phones, other browsers and screen readers remain unverified. Hosting/repository links and LMS submission remain user-controlled deliverables. Phase 6 premium design and Phase 7 final acceptance remain deferred; this checkpoint does not claim their completion.

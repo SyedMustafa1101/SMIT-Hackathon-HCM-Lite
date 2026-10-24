@@ -12,7 +12,7 @@ function context() {
   const data = new Map(); let time = '2026-10-19T09:15:00.000+05:00';
   const adapter = { getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v), removeItem: k => data.delete(k) };
   const sandbox = vm.createContext({ crypto: webcrypto, Date, TextEncoder });
-  for (const file of ['storage.js', 'attendance.js', 'leaves.js', 'hcm.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', file), 'utf8'), sandbox);
+  for (const file of ['storage.js', 'attendance.js', 'leaves.js', 'payroll.js', 'announcements.js', 'helper.js', 'hcm.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', file), 'utf8'), sandbox);
   const storage = sandbox.HCMStorage.create(adapter), options = { clock: () => new Date(time) };
   return { data, adapter, sandbox, storage, app: sandbox.HCM.create(storage, options), setTime: value => { time = value; }, fresh: () => sandbox.HCM.create(sandbox.HCMStorage.create(adapter), options) };
 }

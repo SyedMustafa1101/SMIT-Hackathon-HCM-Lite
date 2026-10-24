@@ -1,6 +1,133 @@
 # Progress and handoff
 
-## Current handoff: Phase 3 — complete, paused for user review/manual commit/push
+## Current handoff: Phase 5 — complete, paused for user review/manual commit/push
+
+Completed on 2026-10-25 under the attached request for Announcements and Keyword Smart Helper only. Read AGENTS.md, PLAN.md, PROGRESS.md, README.md, all four physical pages of the original PDF (text extraction; additionally inspected the rendered helper/scoring page), and existing modules/tests. Preserved the pre-existing uncommitted Phase 4 work. No commit, push, deploy, submission, framework, app backend, extra page/key, app seed data, external API, illustration, premium redesign or bonus was added. Phases 1–5 retain their numbering; Phase 6 premium UI/UX and Phase 7 final acceptance await separate authorization.
+
+### Phase 5 changed files and behavior
+
+- Added `js/announcements.js`: authenticated `list()` and Admin-only `post({ title, body })`. Stable IDs, required trimmed title/message, current author ID and canonical UTC creation time; newest-first timestamp order with deterministic ID tie-break. Current author name/ID fallback; no editing/deletion/targeting/read receipts.
+- Added `js/helper.js`: fresh current-session/data resolution, role-specific suggestions and `query()` returning only intent/answer strings. Explicit whole-question keyword patterns normalize case, whitespace and ordinary punctuation; unsupported/mixed/named/other-role queries fall back to supported questions. Employee target manipulation is rejected. No LLM, external API, stored chat or raw-object/credential output.
+- Updated `js/storage.js`: exact five announcement fields (`id`, `title`, `body`, `authorId`, `createdAt`), nonblank content, canonical timestamp and unique IDs. Existing empty arrays remain compatible. Unknown/missing/malformed records block use and remain untouched; no silent reset/migration.
+- Updated `js/hcm.js`: composes announcement/helper services using existing clock/role/ID boundaries and attendance/leave services. Existing account/settings/payroll behavior preserved.
+- Updated `js/pages.js`: both dashboard announcement feeds, Admin title/textarea form, inline errors, safe text/author/timestamp rendering, refresh/empty state and retained inputs after failed saves. Both helper forms have labels, suggestions, submit/Enter support, live readable response history, clear blank errors and memory-only answers. New replies scroll the log to the latest answer. Account changes clear history via storage/focus/visibility/submit; invalid-session/storage query errors clear old responses. A null-account comparison preserves unsaved setup/login fields on ordinary focus.
+- Updated `css/style.css`: existing readable textarea/error styles, wrapping announcement bodies/suggestions and a contained keyboard-focusable response log. No visual redesign.
+- Updated `index.html` and all six `pages/*.html`: load new modules before domain composition, Phase 5 footer. Exactly seven paths preserved. Updated `tools/serve.cjs` static allowlist with both scripts; no application API.
+- Added `tests/phase5.test.cjs` and `tests/phase5-browser.cjs`. Updated module loaders in `tests/domain.test.cjs`, `tests/attendance.test.cjs`, `tests/leaves.test.cjs`, `tests/payroll.test.cjs`; shared page inventory includes the new scripts. Existing Phase 1–4 test expectations otherwise preserved.
+- Updated `AGENTS.md`, `PLAN.md`, `README.md`, `PROGRESS.md` with policies, walkthrough, checkpoint, results/limits and the review boundary.
+
+### Helper answer policies and independently known fixtures
+
+- Admin employee count uses current Employee accounts (fixture: three, then two after deletion; browser two/empty zero). Approved-today lists current employed users on/after joining whose approval covers this configured working date, excludes pending/rejected/deleted accounts, and states nonworking days. It reports approval coverage even with actual attendance. Fixture: one eligible approval among pending/rejected/deleted/pre-joining cases.
+- Admin late-today uses actual saved `isLate`, including a late half-day, late open shift and retained deleted record (fixture: three late records, with a separate on-time record excluded). Later settings do not reclassify lateness. Deleted IDs are explicitly labeled.
+- Employee balance reuses leave service: current-year quota minus approved working days, with pending reservations and available days separately. Domain fixture: quota 10, approved 3, pending 2 gives approved balance 7/available 5; reducing quota to 1 gives -2/-4 honestly. Browser fixture: approved 1/pending 2 gives 9/7. Other users and prior-year requests excluded; current working settings remain authoritative.
+- Employee lateness uses own actual saved flag/status; absent check-in reports unknown. Tests cover on-time, late half-day and late open records. No company-wide or named-other-employee query is answered.
+- Weekly hours reuse scoped attendance reports for device-local Monday–Sunday. Sum completed stored durations by original starting date, including actual nonworking/overnight shifts; do not accrue unfinished time. An open shift is disclosed even if its start is outside this week. Domain fixture: 3 + 8 + 12 = 23 completed hours; previous Sunday and another account's 99 hours excluded. Monday/Sunday/week/year transitions, Sunday inclusion, overnight/long shift attribution and future-relative saved activity are covered. Browser own fixture: 8 + 2 = 10 completed hours; second Employee open shift = 0 completed hours with notice.
+
+### Phase 5 exact verification results
+
+All fixtures were in isolated in-memory adapters or disposable Edge contexts at temporary local origins. No normal browser profile or delivered source data was seeded.
+
+1. `node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs tests/phase5.test.cjs`: **71 passed, 0 failed** (55 Phase 1–4 regressions + 16 Phase 5 tests). New tests cover all required questions/known values, variants/punctuation/case/blank/unknown/ambiguous/other-role/named queries, zero records, retained deleted IDs, saved flags, week/overnight/year boundaries, approved/pending/negative balances, session freshness/direct calls, no writes/raw objects, announcement posting/order/fields/author/schema/persistence, malformed/unavailable storage and failed saves.
+2. `node tests/browser.cjs`: **14 scenarios passed**. Foundation setup/login/password/CRUD/search/filter/settings/role/session/storage/mobile/empty-start checks preserved.
+3. `node tests/attendance-browser.cjs`: **10 scenarios passed**. Attendance actions/status/cutoff/duration/scope/date filters/nonworking/overnight/joining/save-failure/phone regressions preserved.
+4. `node tests/leaves-browser.cjs`: **10 scenarios passed**. Employee request → Admin approval → Employee status/balance, comments/rejection/reservations/settings/stale review/attendance integration/storage/phone regressions preserved.
+5. `node tests/payroll-browser.cjs`: **9 scenarios passed**. Exact payslip example, all/own/period guards, print invocation/media, current-data beforeprint, notices/error/no-write/phone checks preserved. Native OS dialog and user Save remain untested.
+6. `node tests/phase5-browser.cjs`: **11 scenarios passed**, no page JavaScript errors. Actual Admin post → Employee reading, required errors and keyboard focus, safe markup/author/timestamp/order/reload, failed save retaining text/records, all six answers, suggestions/Enter/Tab/blank/fallback, own/company denial/direct targets/no writes, half-day/open/no-checkin, 390px controls/history/long text, nonworking day, role/same-role account changes and memory-only reset, malformed/unsupported/unavailable storage, zero/anonymous/deleted/empty startup.
+7. `node --check` passed for all **20** app/tool/test JavaScript files; seven-page/module inventory and `git diff --check` passed. Static preview serves both new scripts during browser checks.
+8. Visually inspected desktop and 390px phone automated captures, including the announcement form/feed, helper suggestions/input/history and safe markup text. No clipped controls or page overflow found. This was screenshot inspection after automation, not a separate hand-operated walkthrough, screen-reader test or physical-phone test. QA captures are system-temp `hcm-phase5-*.png`, outside app assets.
+
+Exact invocation uses the bundled Node executable (or `node` on PATH) and existing development-only Playwright package:
+
+```powershell
+$env:HCM_PLAYWRIGHT_MODULE='C:\Users\ALPHA\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs tests/phase5.test.cjs
+node tests/browser.cjs
+node tests/attendance-browser.cjs
+node tests/leaves-browser.cjs
+node tests/payroll-browser.cjs
+node tests/phase5-browser.cjs
+```
+
+During development, one Phase 5 browser run stopped at Edge `ERR_NETWORK_IO_SUSPENDED` navigation while other suites ran. A subsequent run exposed a test fixture using plain Event instead of StorageEvent with a relevant key; the fixture was corrected to simulate the actual browser event. The final standalone run passed. No app failure was concealed by treating those incomplete runs as passes.
+
+### Mandatory-feature checkpoint, limits and next step
+
+Recompared every mandatory item in PDF sections 1–5 and 7: empty setup, both accounts/passwords/logout/settings, employee login/CRUD/search/filter/field errors, scoped attendance/time rules, leave request/review/comment/quota/overlap/balance, company/personal dashboards, payroll formula/scoped slips/print, all six keyword questions, announcements, readable phone layout/reusable code/README walkthrough are implemented and covered by automated checks. No known remaining mandatory functional gap within the authorized local implementation. Hosting/repo links and LMS submission remain user-controlled and unperformed. Phase 6 design and Phase 7 final acceptance remain outstanding separate milestones.
+
+Limits: browser-only identity/device time/localStorage remain a learning demonstration, origin-specific and non-atomic across concurrent tabs; use one editing tab. Helper patterns only support the documented variants, one question per query. UI history has no persistence; existing responses are past answers, new queries read fresh data. Current settings intentionally recalculate leave/payroll/history. Tested installed Edge and emulated 390px phones; other browsers, physical phones, assistive technology and native print/actual Save were not exercised. No bonus or premium design work was started.
+
+**Pause for Phase 5 review and manual commit/push. Next only with separate authorization: Phase 6 premium UI/UX, then Phase 7 final acceptance.**
+
+Suggested commit message: `feat: add announcements and role-scoped keyword helper`
+
+---
+
+## Phase 4 — historical completion record (superseded by Phase 5 above)
+
+Completed on 2026-10-25 under the attached request to implement Payroll and Payslips only. Read AGENTS.md, PLAN.md, this file, README.md, existing modules/tests and all four physical pages of the original hackathon PDF (text extraction and rendered-page inspection) before implementation. The PDF full-month formula and the user's explicit edge policies govern this milestone. Existing attendance/leave/accounts work was preserved. No commit, push, deploy, submission, framework, backend, extra page/key, seeded app data, announcements/helper, illustration, premium redesign or optional bonus was added.
+
+### Phase 4 changed files
+
+- Added `js/payroll.js`: focused read-only service exposing role-scoped employee choices and monthly slips. Every call resolves the current account; Admin selects existing employees, Employee is own-only, including manipulated IDs/direct calls. Reuses leave working-date/coverage and attendance absence logic. Derives totals without writes or historical snapshots. Validates periods, current clock, future activity and finite totals; exposes explicit status and notices through returned fields.
+- Updated `js/hcm.js`: composes payroll alongside existing attendance/leave services; existing account/settings boundaries stay intact.
+- Updated `js/pages.js`: replaces the payslip placeholder with month/year and Admin employee selection, own Employee identity, full company/employee/period/calculation breakdown, inline errors/empty states, projection/proration/open-shift notices, safe text rendering, refresh and browser print instructions. Selection changes invalidate old figures. Button and native beforeprint revalidate current data/account and suppress stale figures on failure. Dashboard/settings text now truthfully describes available payroll.
+- Updated `css/style.css`: minimal responsive payslip table and A4 print rules. Print hides navigation, controls, password panel and unrelated content; preserves identity, formulas and notices; avoids split rows and repeats table headers. Render review corrected the print root background and column widths.
+- Updated `index.html` and all six existing `pages/*.html`: payroll module loads before domain composition; footer says Phase 4. Exactly seven existing HTML paths remain.
+- Updated `tools/serve.cjs`: development-only static allowlist includes payroll script, with no application API/backend.
+- Added `tests/payroll.test.cjs` and `tests/payroll-browser.cjs`. Updated loaders/inventory in `tests/domain.test.cjs`, `tests/attendance.test.cjs`, `tests/leaves.test.cjs`; replaced the superseded payslip-placeholder assertion in `tests/browser.cjs` with the real breakdown assertion. Other regression behavior was preserved.
+- Updated `AGENTS.md`, `PLAN.md`, `README.md`, `PROGRESS.md`: permanent policies, completed checklist, walkthrough, calculation/print limits and current handoff.
+
+### Phase 4 calculation decisions
+
+These supplement the PDF for its unspecified cases, following the attached request. They do not alter its completed full-month formula.
+
+- Current saved salary, working days, joining date and approved-leave rules apply even to old periods. No historical salary/settings snapshots or stored payroll totals. Final indicates a past month with resolved eligible attendance under current data; it does not lock payroll.
+- Daily rate uses all configured working days in the month. Fully eligible gross is monthly salary. Joining-month gross is daily rate × eligible working days on/after joining; subtract eligible absence/half-day deductions. Before-joining/no-eligible months have zero entitlement. Proration and formulas are labeled.
+- Current-month slips are provisional full-month projections, not earned-to-date amounts. Gross covers the whole eligible month; deductions include elapsed absence and completed working-day half-days (including completed today), never today/future absence. Future-month slips are unavailable.
+- Approved working-day leave is paid/excused. Pending/rejected leave does not excuse absence. Actual attendance wins, including half-day/open/late overlap. Paid-leave counts cover the whole selected eligible period, including future approved dates in a current-month projection, excluding actual attendance dates.
+- Late alone has no deduction. Nonworking-day attendance yields no deduction or extra pay. Overnight/overdue shifts credit only their starting date. Open eligible working-day shifts make their starting month's slip provisional with unresolved dates and no invented duration/half-day deduction; later working days may remain absent.
+- Zero working days produces Cannot calculate/null amounts, never division by zero. Existing validated company settings require at least one weekday, so this branch is tested with injected state without weakening storage validation; malformed settings still block/preserve data.
+- Full precision is retained throughout; currency displays use two decimals, without assuming a currency. Rates are not rounded before multiplying. When every eligible day is deducted, deduction equals gross exactly, preventing floating-point negative residue/overflow (regression-tested with 0.1 and maximum finite salary). Finite/nonnegative totals are required. Viewing/printing writes no source records or aggregate totals.
+
+### Phase 4 exact verification results
+
+All fixtures were isolated in-memory or disposable browser contexts at temporary local origins. No normal browser profile or delivered app data was seeded.
+
+1. `node --test tests/domain.test.cjs tests/attendance.test.cjs tests/leaves.test.cjs tests/payroll.test.cjs`: **55 passed, 0 failed** (14 foundation + 13 attendance + 16 leave + 12 payroll). Payroll coverage: the exact 26,000/26/2 absent/2 half-days example gives daily rate 1,000, deduction 3,000, net 23,000; zero/all absence, halves, late-only, paid/pending/rejected leave, attendance overlap, nonworking attendance/open shifts, overnight/multi-day attribution, custom Sundays/Tuesdays, leap February, year boundaries/max year, joining/before-joining/current/future periods, zero-day guard, fractional rates, current-settings recalculation, all/own/manipulated IDs, anonymous/stale/deleted accounts, refresh, invalid periods/clock/future attendance, malformed/unavailable storage, denied writes and no source mutation.
+2. `node tests/browser.cjs`: **14 scenarios passed**, including existing setup/login/passwords/CRUD/search/filter/settings/session guards/storage failures/mobile/empty-start checks. Its superseded payslip placeholder check now verifies the real breakdown.
+3. `node tests/attendance-browser.cjs`: **10 scenarios passed**, preserving own actions, grace/duration/status, date/employee filters, authorization, overnight/nonworking/joining rules, failed saves and 390px layout.
+4. `node tests/leaves-browser.cjs`: **10 scenarios passed**, preserving request/review/comment/balance/reservation, filters, stale settings, failed saves, approval/actual-attendance integration, role scope, malformed storage and phone layouts.
+5. `node tests/payroll-browser.cjs`: **9 scenarios passed**, no page JavaScript errors. Admin employee selection/empty error and exact displayed PDF example; second-employee access; invalid/future periods and stale-selection invalidation; fixed Employee identity/manipulated-ID rejection/refresh; print invocation and hidden print controls with no writes; 390px bounds and safe markup; joining/before-joining/open-shift notices; beforeprint current-data recalculation and removal of stale figures on preserved malformed data; unavailable storage, anonymous/no-employees/untouched startup; stale/deleted session and reload redirect.
+6. `node --check` passed for all **16** app/tool/test JavaScript files. Domain inventory confirms seven HTML paths with all module loads; static preview served payroll during browser checks. `git diff --check` passed (Git emits existing LF-to-CRLF informational warnings on this Windows checkout).
+7. Headless Edge `page.pdf({ preferCSSPageSize: true })` produced isolated final and provisional/prorated test PDFs. Poppler rendered both; pypdf confirmed **one A4 page each** (594.96 × 841.92 points), required breakdown content, 23,000 net in the final example and preserved provisional/unresolved/proration notices. Rendered pages were visually inspected after the final CSS adjustment: no clipped values, overlapping content, awkward row breaks or hidden notices. Also inspected desktop 1280px and phone 390px captures; controls, long safe user text and breakdown fit. These were automated captures followed by visual inspection, not a separate hand-operated walkthrough.
+
+Exact browser invocation (existing development-only Playwright package, installed Edge):
+
+```powershell
+$env:HCM_PLAYWRIGHT_MODULE='C:\Users\ALPHA\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+node tests/browser.cjs
+node tests/attendance-browser.cjs
+node tests/leaves-browser.cjs
+node tests/payroll-browser.cjs
+```
+
+Temporary QA files are in the system temp directory: `hcm-phase4-desktop.png`, `hcm-phase4-phone.png`, `hcm-phase4-final.pdf`, `hcm-phase4-provisional.pdf` and their rendered PNGs. They contain isolated test records and are not app assets or payroll downloads for the user's company.
+
+### Phase 4 limits and next step
+
+- No known failing Phase 4 acceptance checks. Native OS print dialog/printer behavior and the user's actual Save as PDF action were **not** exercised. The button was tested with a print stub; print media and PDF output were tested separately through headless Edge. Invoking the print dialog is not claimed as a generated download.
+- Browser-only authorization/device time remain a learning demonstration. Storage remains browser/origin-specific, writable by its owner, and non-atomic across simultaneous writers. Use one editing tab. Viewing/printing does not change data, but relevant settings/account edits intentionally recalculate historical slips.
+- Only installed Edge and emulated 390px phones were exercised, not all browsers, physical phones or screen readers. No locked payroll history, automatic download, payroll exports, taxes, bonuses, overtime or other unrequested features were added.
+- Phase 5 announcements/keyword helper, Phase 6 premium UI/UX and Phase 7 final acceptance remain deferred. Hosting/repository/LMS delivery remains user-controlled.
+
+**Pause for Phase 4 review and manual commit/push. Next only after separate authorization: Phase 5 announcements and keyword helper. Do not start it automatically.**
+
+Suggested commit message: `feat: implement role-scoped monthly payroll and printable payslips`
+
+---
+
+## Phase 3 — historical completion record (superseded by Phase 4 above)
 
 Completed on 2026-10-25 under the attached request to implement Leave Management only. Inspected AGENTS.md, PLAN.md, this file, README.md, existing code/tests and all four physical pages of the original PDF (text extraction plus rendered-page inspection). Existing Phase 1–2 implementation and module boundaries were extended. No commit, push, deployment, submission, framework, application backend, extra storage key, seeded app data, payroll, announcement/helper feature, illustration or premium redesign was added. Exactly seven page paths remain.
 
@@ -127,7 +254,7 @@ Phases 1–5 keep their numbers. Phase 6 is now explicitly dedicated to premium 
 
 ### Historical next step after Phase 2 (superseded)
 
-The Phase 2 stop was subsequently superseded by the user's Phase 3 authorization. The current Phase 3 handoff above now governs continuation.
+The Phase 2 stop was subsequently superseded by the user's Phase 3 authorization. The current Phase 5 handoff above now governs continuation.
 
 Suggested commit message: `feat: add role-scoped attendance tracking and summaries`
 
@@ -157,7 +284,7 @@ Phase 1 was completed and verified on 2026-10-24. At that historical handoff Pha
 - Every protected page checks session against current user records. Employees redirect from all four Admin pages; Admin redirects from Employee-only dashboard. Stale/deleted sessions cannot grant access. Storage events and browser-back restoration recheck access; focus also rechecks the guard.
 - Admin employee add/edit/delete (native confirmation including cancel path), name/email search plus department filtering, empty/no-match states. Employee creation provides working login. Edit preserves ID/password and updates login email; deletion disables login. Name/email/department/salary/joining date validation and field-level errors included.
 - Company settings edit/save with validation and persistence, including working days and allowed zero grace/quota.
-- At Phase 1, Employee saw their profile and later-workflow placeholders. Attendance and leave are now complete as recorded above. Payslip, announcements and helper still identify their later phases; no fabricated payroll/print claims.
+- At Phase 1, Employee saw their profile and later-workflow placeholders. Attendance, leave and payroll are now complete as recorded above. Announcements and helper remain Phase 5.
 - README covers running a static preview, using the app, verification, storage keys, learning-only browser authentication, data recovery and the handoff boundary. Static preview tool has no application API/backend or database.
 
 ## Verification results
@@ -182,16 +309,16 @@ All checks below passed. Test records existed only in in-memory storage or dispo
 - localStorage cannot make cross-tab transactions atomic. Use one editing tab; a change in another tab re-renders and may discard unsaved input. Setup writes attempt rollback on write failures and report incomplete rollback explicitly if necessary.
 - Verified on desktop Edge and emulated phone viewport, not physical phones or every browser. Web Crypto requires localhost or HTTPS. No runtime dependency installation was needed for the application.
 - At Phase 1, attendance/leave/announcement collections were checked as arrays of objects. Phases 2–3 now add strict attendance/leave validation; announcement validation remains for Phase 5. Do not auto-migrate or silently reset unfamiliar existing records.
-- Attendance/leave policy edges are now recorded in AGENTS.md, including open-shift and cross-year/paid-leave rules. Remaining payroll-specific edges (such as partial joining months or months without configured working days) must be resolved in Phase 4 before presenting salary calculations.
+- Attendance, leave and payroll policy edges are recorded in AGENTS.md, including open shifts, paid leave, joining-month proration and provisional projections. Phase 4 resolved and verified these policies.
 
 ## Remaining mandatory work
 
-The unchecked items in PLAN.md are the source checklist. Attendance, leave and their real company/personal summaries are complete. Remaining: monthly payslip formula with all/own access and print/Save as PDF; Admin announcements/Employee reading; both keyword-helper chats with role-scoped real answers; Phase 6 premium UI and Phase 7 final integration acceptance. Hosting/repository links and LMS submission remain the user's eventual responsibility, outside this session.
+The unchecked items in PLAN.md are the source checklist. Attendance, leave, payroll and their real summaries are complete. Remaining: Admin announcements/Employee reading; both keyword-helper chats with role-scoped real answers; Phase 6 premium UI and Phase 7 final integration acceptance. Hosting/repository links and LMS submission remain the user's eventual responsibility, outside this session.
 
 ## Historical next step after Phase 1 (superseded)
 
-The user subsequently authorized Phases 2–3; the current Phase 3 handoff above now governs continuation.
+The user subsequently authorized Phases 2–4; the current Phase 4 handoff above now governs continuation.
 
 Suggested commit message: `feat: implement phase 1 HCM setup, auth, employees and settings`
 
-The original Phase 1 handoff pointed to attendance. Phases 2–3 are now complete; remaining work starts at Phase 4 only after authorization.
+The original Phase 1 handoff pointed to attendance. Phases 2–4 are now complete; remaining work starts at Phase 5 only after authorization.

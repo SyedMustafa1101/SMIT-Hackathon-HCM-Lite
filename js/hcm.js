@@ -151,13 +151,16 @@
     }
     const leaves = root.HCMLeaves.create(storage, requireRole, { clock, makeId: id });
     const attendance = root.HCMAttendance.create(storage, requireRole, { clock, makeId: id });
+    const payroll = root.HCMPayroll.create(storage, requireRole, { clock });
+    const announcements = root.HCMAnnouncements.create(storage, requireRole, { clock, makeId: id });
+    const helper = root.HCMHelper.create(storage, requireRole, { clock, attendance, leaves });
     function getState() {
       const state = storage.state(), user = currentUser();
       return { ...state,
         attendance: user?.role === 'Admin' ? state.attendance : user ? state.attendance.filter(a => a.employeeId === user.id) : [],
         leaves: user?.role === 'Admin' ? state.leaves : user ? state.leaves.filter(l => l.employeeId === user.id) : [] };
     }
-    return Object.freeze({ currentUser, route, setup, login, logout, changePassword, addEmployee, editEmployee, deleteEmployee, employees, saveSettings, attendance, leaves, getState });
+    return Object.freeze({ currentUser, route, setup, login, logout, changePassword, addEmployee, editEmployee, deleteEmployee, employees, saveSettings, attendance, leaves, payroll, announcements, helper, getState });
   }
   root.HCM = Object.freeze({ create, ValidationError, localDate });
 })(globalThis);

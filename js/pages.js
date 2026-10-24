@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const UI = HCMUI, page = document.body.dataset.page;
-  let app;
+  let app, renderedAccount;
   function heading(title, description) {
     UI.byId('content').append(UI.el('h1', title), UI.el('p', description, 'intro'));
   }
@@ -16,12 +16,12 @@
     else UI.bindForm(UI.byId('login-form'), UI.byId('auth-status'), async input => { const role = await app.login(input); UI.go(role === 'Admin' ? 'admin' : 'employee'); });
   }
   function admin() {
-    heading('Admin dashboard', 'Manage employees, settings, company attendance and leave. Payroll and helper workflows remain reserved for later phases.');
+    heading('Admin dashboard', 'Manage employees, settings, attendance, leave, payslips and announcements. Ask supported questions using the keyword helper.');
     const card = UI.el('section', undefined, 'card'); card.innerHTML = `<h2>Manage your workspace</h2><p>Add an employee to create their login, or update the rules for your company.</p><div class="actions"><a class="button" href="employees.html">Manage employees</a><a class="button secondary" href="settings.html">Company settings</a></div>`; UI.byId('content').append(card);
     attendanceView(true);
     const leaveCard = UI.el('section', undefined, 'card'); leaveCard.innerHTML = '<h2>Company leave</h2><p id="leave-overview" role="status"></p><a href="leaves.html">Review leave requests</a>'; UI.byId('content').append(leaveCard);
     const totals = app.leaves.overview(); UI.byId('leave-overview').textContent = `${totals.pending} pending leave requests. ${totals.approvedToday} current employees on approved leave today (configured working dates only).`;
-    UI.byId('content').append(UI.empty('Announcements & smart helper', 'Posting announcements and the keyword-based helper are reserved for Phase 5.', 5));
+    announcementsView(true); helperView();
   }
   function employees() {
     heading('Employees', 'Create an employee and their login in one step. Search and department filters work together. All employee fields are required.');
@@ -80,7 +80,7 @@
     UI.byId('search').addEventListener('input', refreshDirectory); UI.byId('department-filter').addEventListener('change', refreshDirectory); refreshDirectory();
   }
   function settings() {
-    heading('Company settings', 'Attendance and leave use these rules. Working-day/quota edits recalculate leave balances and pending reservations, including history; balances may become negative. Payroll remains Phase 4. All fields are required.');
+    heading('Company settings', 'Attendance, leave and payroll use current saved rules. Working-day/quota edits recalculate historical figures and reservations; leave balances may become negative. Payslips have no historical snapshots. All fields are required.');
     const card = UI.el('section', undefined, 'card');
     card.innerHTML = `<form id="settings-form" novalidate>${UI.formNotice('settings-status')}<div class="grid">${UI.companyFields()}</div><p class="help">Grace minutes: 0–1440. Yearly leave quota: 0–366. Choose at least one working day.</p><div class="actions"><button type="submit">Save settings</button></div></form>`;
     UI.byId('content').append(card);
@@ -88,14 +88,64 @@
     UI.bindForm(form, UI.byId('settings-status'), input => { app.saveSettings(input); UI.header(app, page); UI.message(UI.byId('settings-status'), 'Company settings saved.'); });
   }
   function employee() {
-    const user = app.currentUser(); heading('My dashboard', 'Check in, check out, review your attendance and manage your own leave. Payslips remain reserved for Phase 4.');
+    const user = app.currentUser(); heading('My dashboard', 'Check in, check out, review attendance and manage your leave. Open My payslip for monthly salary calculations and printing.');
     const card = UI.el('section', undefined, 'card'); card.append(UI.el('h2', 'My profile'));
     const list = UI.el('dl');
     [['Name', user.name], ['Email', user.email], ['Department', user.department], ['Joining date', user.joiningDate], ['Monthly salary', user.monthlySalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 20 })]].forEach(([label, value]) => list.append(UI.el('dt', label), UI.el('dd', value)));
     card.append(list); UI.byId('content').append(card);
     attendanceView(false);
     leaveView(false);
-    UI.byId('content').append(UI.empty('Announcements & my smart helper', 'Announcements and the keyword-based helper for your own data are reserved for Phase 5.', 5));
+    announcementsView(false); helperView();
+  }
+  function announcementsView(isAdmin) {
+    const section = UI.el('section', undefined, 'card'); section.id = 'announcements-section';
+    section.innerHTML = `<h2>Announcements</h2>${isAdmin ? `<form id="announcement-form" novalidate>${UI.formNotice('announcement-status')}${UI.field('announcementTitle', 'Announcement title')}<div class="field"><label for="announcementBody">Announcement message</label><textarea id="announcementBody" name="announcementBody" rows="4" required aria-describedby="error-announcementBody"></textarea><span id="error-announcementBody" class="field-error"></span></div><div class="actions"><button type="submit">Post announcement</button></div></form>` : '<p class="help">Company announcements from your Admin. Employees have read-only access.</p>'}<div class="actions"><button type="button" id="announcements-refresh" class="secondary">Refresh announcements</button></div>${UI.formNotice('announcements-status')}<div id="announcements-list"></div>`;
+    UI.byId('content').append(section);
+    function refresh() {
+      const records = app.announcements.list(), list = UI.byId('announcements-list'); list.replaceChildren();
+      if (!records.length) list.append(UI.el('p', 'No announcements yet. Posted announcements will appear here, newest first.', 'empty'));
+      records.forEach(record => {
+        const article = UI.el('article', undefined, 'announcement');
+        const time = UI.el('time', new Date(record.createdAt).toLocaleString()); time.dateTime = record.createdAt;
+        const byline = UI.el('p', `By ${record.authorName} · `, 'help'); byline.append(time);
+        article.append(UI.el('h3', record.title), byline, UI.el('p', record.body, 'announcement-body')); list.append(article);
+      });
+    }
+    UI.byId('announcements-refresh').addEventListener('click', () => {
+      try { refresh(); UI.byId('announcements-status').hidden = true; }
+      catch (error) { UI.byId('announcements-list').replaceChildren(); UI.message(UI.byId('announcements-status'), error.message, 'error'); }
+    });
+    if (isAdmin) UI.bindForm(UI.byId('announcement-form'), UI.byId('announcement-status'), input => {
+      app.announcements.post({ title: input.announcementTitle, body: input.announcementBody });
+      UI.byId('announcement-form').reset(); refresh(); UI.message(UI.byId('announcement-status'), 'Announcement posted.');
+    });
+    refresh();
+  }
+  function helperView() {
+    const section = UI.el('section', undefined, 'card'); section.id = 'helper-section';
+    section.innerHTML = `<h2>Keyword smart helper</h2><p id="helper-help" class="help">Matches supported questions using JavaScript and current saved data. Ask one question at a time. History stays on this page until reload or an account change.</p><div id="helper-suggestions" class="actions" role="group" aria-label="Suggested questions"></div><form id="helper-form" novalidate>${UI.formNotice('helper-status')}${UI.field('helperQuestion', 'Your question', 'text', 'autocomplete="off" aria-controls="helper-history"')}<div class="actions"><button type="submit">Ask helper</button></div></form><h3>Response history</h3><div id="helper-history" role="log" aria-label="Helper response history" aria-live="polite" aria-relevant="additions" tabindex="0"><p id="helper-empty" class="empty">No questions yet. Type a question or choose a suggestion.</p></div>`;
+    UI.byId('content').append(section);
+    const form = UI.byId('helper-form'), owner = app.currentUser().id, history = UI.byId('helper-history');
+    app.helper.suggestions().forEach(question => {
+      const button = UI.el('button', question, 'secondary'); button.type = 'button';
+      button.addEventListener('click', () => { UI.byId('helperQuestion').value = question; UI.byId('helperQuestion').focus(); form.requestSubmit(); });
+      UI.byId('helper-suggestions').append(button);
+    });
+    UI.bindForm(form, UI.byId('helper-status'), input => {
+      try {
+        if (app.currentUser()?.id !== owner) { history.replaceChildren(); render(); return; }
+        const result = app.helper.query(input.helperQuestion);
+        UI.byId('helper-empty')?.remove();
+        const entry = UI.el('div', undefined, 'helper-entry');
+        entry.append(UI.el('p', `You: ${input.helperQuestion}`), UI.el('p', `Helper: ${result.answer}`)); history.append(entry);
+        history.scrollTop = history.scrollHeight;
+        UI.byId('helperQuestion').value = ''; UI.byId('helperQuestion').focus();
+      } catch (error) {
+        // Never leave privileged answers visible after an invalid session or unreadable data.
+        if (!error.fields) history.replaceChildren();
+        throw error;
+      }
+    });
   }
   function attendanceView(isAdmin) {
     const section = UI.el('section', undefined, 'card'); section.id = 'attendance-section';
@@ -244,8 +294,60 @@
     history();
   }
   function payslip() {
-    heading(app.currentUser().role === 'Admin' ? 'Payslips' : 'My payslip', 'Monthly salary slips · reserved for Phase 4.');
-    UI.byId('content').append(UI.empty('Payslips are not available yet', 'Monthly calculations, Admin access to all slips, Employee access to their own slip, and print / Save as PDF will be implemented in Phase 4. No salary deductions are calculated in this milestone.', 4));
+    const user = app.currentUser(), isAdmin = user.role === 'Admin';
+    heading(isAdmin ? 'Payslips' : 'My payslip', 'Calculate a monthly slip from saved attendance and approved paid leave. Amounts use the company’s chosen currency.');
+    const controls = UI.el('section', undefined, 'card payroll-controls');
+    controls.innerHTML = `<form id="payroll-form" novalidate>${UI.formNotice('payroll-status')}<div class="grid">${isAdmin ? '<div class="field"><label for="payrollEmployee">Employee</label><select id="payrollEmployee" name="payrollEmployee" required aria-describedby="error-payrollEmployee"><option value="">Choose employee</option></select><span id="error-payrollEmployee" class="field-error"></span></div>' : ''}<div class="field"><label for="payrollMonth">Month</label><select id="payrollMonth" name="payrollMonth" required aria-describedby="error-payrollMonth"></select><span id="error-payrollMonth" class="field-error"></span></div>${UI.field('payrollYear', 'Year', 'number', 'min="100" max="9999" step="1"')}</div><div class="actions"><button type="submit">Calculate / Refresh payslip</button><button id="payroll-print" type="button" class="secondary" disabled>Print / Save as PDF</button></div></form><p class="help">To save a PDF, choose Save as PDF in your browser’s print destination, then Save. Opening the print dialog does not create a downloaded file. A4 portrait is recommended.</p><p id="payroll-empty" class="empty" hidden>No employees yet. Add an employee before calculating a payslip.</p>`;
+    const article = UI.el('article', undefined, 'card payslip'); article.id = 'payslip'; article.hidden = true; article.setAttribute('aria-label', 'Selected monthly payslip');
+    UI.byId('content').append(controls, article);
+    const form = UI.byId('payroll-form'), print = UI.byId('payroll-print'), today = HCM.localDate();
+    for (let month = 1; month <= 12; month++) { const option = UI.el('option', new Date(2026, month - 1, 1).toLocaleString(undefined, { month: 'long' })); option.value = month; UI.byId('payrollMonth').append(option); }
+    UI.fill(form, { payrollMonth: String(Number(today.slice(5, 7))), payrollYear: today.slice(0, 4) });
+    if (isAdmin) {
+      const options = app.payroll.employeeOptions();
+      options.forEach(employee => { const option = UI.el('option', employee.name); option.value = employee.id; UI.byId('payrollEmployee').append(option); });
+      UI.byId('payroll-empty').hidden = !!options.length;
+    }
+    function invalidate() { article.hidden = true; article.replaceChildren(); print.disabled = true; }
+    form.addEventListener('input', invalidate); form.addEventListener('change', invalidate);
+    const money = value => value === null ? 'Cannot calculate' : value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function calculate() {
+      invalidate();
+      const values = UI.values(form), input = { month: values.payrollMonth, year: values.payrollYear };
+      if (isAdmin) input.employeeId = values.payrollEmployee;
+      const s = app.payroll.slip(input);
+      article.append(UI.el('h2', s.companyName), UI.el('h3', `Monthly payslip · ${s.period}`), UI.el('p', `${s.status} · Calculated as of ${s.asOf}`, 'notice info'));
+      const identity = UI.el('dl');
+      for (const [label, value] of [['Employee', s.employee.name], ['Employee ID', s.employee.id], ['Department', s.employee.department], ['Joining date', s.employee.joiningDate], ['Period', `${s.from} to ${s.to}`]]) identity.append(UI.el('dt', label), UI.el('dd', value));
+      article.append(identity);
+      if (s.currentMonth) article.append(UI.el('p', 'Provisional full-month projection, not salary earned to date. Gross covers all eligible working days this month; deductions include only elapsed absences and completed working-day half-days. Today and future dates are never absent.', 'notice info'));
+      if (s.openDates.length) article.append(UI.el('p', `Unresolved attendance: open working-day shift(s) starting ${s.openDates.join(', ')}. This slip cannot be final until checkout resolves them. No duration or half-day deduction is invented.`, 'notice info'));
+      if (s.prorated) article.append(UI.el('p', `Joining-month proration: ${s.eligibleDays} eligible working days on/after joining out of ${s.workingDays} in the month. Gross = monthly salary / ${s.workingDays} × ${s.eligibleDays}.`, 'notice info'));
+      if (!s.eligibleDays && s.workingDays) article.append(UI.el('p', 'No payable entitlement: this month has no working days on/after the current joining date.', 'notice info'));
+      if (!s.workingDays) article.append(UI.el('p', 'Cannot calculate: this month has zero configured working days. A daily rate cannot be calculated.', 'notice error'));
+      const table = UI.el('table'); table.className = 'payroll-breakdown';
+      table.innerHTML = '<caption>Monthly calculation breakdown</caption><thead><tr><th scope="col">Item</th><th scope="col">Value</th></tr></thead>';
+      const body = UI.el('tbody');
+      for (const [key, label, value] of [
+        ['salary', 'Monthly salary', money(s.monthlySalary)], ['working', 'Configured working days in month', s.workingDays], ['eligible', 'Eligible working days on/after joining', s.eligibleDays],
+        ['rate', 'Daily rate (display rounded)', money(s.dailyRate)], ['gross', 'Gross entitlement', money(s.gross)], ['absent', 'Elapsed absent working days', s.absentDays], ['half', 'Completed working-day half-days', s.halfDays],
+        ['leave', 'Approved paid-leave days without attendance (whole period)', s.paidLeaveDays], ['deduction', 'Deductions', money(s.deduction)], ['net', 'Net salary', money(s.net)]
+      ]) { const row = UI.el('tr'), labelNode = UI.el('th', label), valueNode = UI.el('td', value); labelNode.scope = 'row'; valueNode.dataset.payroll = key; row.append(labelNode, valueNode); body.append(row); }
+      table.append(body); article.append(table);
+      article.append(UI.el('p', `Daily rate = monthly salary / ${s.workingDays} configured working days. Gross = ${s.prorated || !s.eligibleDays ? `daily rate × ${s.eligibleDays} eligible days` : 'monthly salary'}. Deduction = daily rate × (${s.absentDays} absent + 0.5 × ${s.halfDays} half-days). Net = gross − deduction.`, 'help'));
+      article.append(UI.el('p', 'Current saved salary, working days, joining date and approved-leave rules apply, including to past periods; historical snapshots are not implemented. Approved leave is paid; pending/rejected leave does not excuse absence. Actual attendance wins over leave. Late alone has no deduction. Nonworking attendance gives no deduction or extra pay. Overnight shifts credit only their starting date. Calculations retain full precision; currency displays use two decimals.', 'help'));
+      article.hidden = false; print.disabled = !s.workingDays;
+      return s;
+    }
+    UI.bindForm(form, UI.byId('payroll-status'), calculate);
+    function refreshForPrint() {
+      try { calculate(); UI.byId('payroll-status').hidden = true; return !print.disabled; }
+      catch (error) { invalidate(); article.append(UI.el('p', `Payslip unavailable: ${error.fields ? Object.values(error.fields).join(' ') : error.message}`, 'notice error')); article.hidden = false; UI.message(UI.byId('payroll-status'), article.textContent, 'error'); return false; }
+    }
+    print.addEventListener('click', () => { if (refreshForPrint()) window.print(); });
+    // Revalidate native Ctrl+P too; never print a stale account or old saved-data calculation.
+    window.addEventListener('beforeprint', () => { if (article.isConnected) refreshForPrint(); });
+    if (!isAdmin) calculate();
   }
   function guard() {
     const destination = app.route(page);
@@ -259,6 +361,7 @@
   function render() {
     try {
       if (!guard()) return;
+      renderedAccount = app.currentUser()?.id || null;
       UI.byId('fatal').hidden = true; UI.byId('content').replaceChildren(); UI.header(app, page);
       ({ index, admin, employees, settings, employee, leaves, payslip })[page]();
       if (page !== 'index') UI.passwordPanel(app);
@@ -272,6 +375,7 @@
     app = HCM.create(HCMStorage.create(adapter)); render();
     window.addEventListener('storage', event => { if (event.key === null || Object.values(HCMStorage.keys).includes(event.key)) render(); });
     window.addEventListener('pageshow', event => { if (event.persisted) render(); });
-    window.addEventListener('focus', () => { try { guard(); } catch (error) { fatal(error); } });
+    window.addEventListener('focus', () => { try { if ((app.currentUser()?.id || null) !== renderedAccount) render(); else guard(); } catch (error) { fatal(error); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { try { if ((app.currentUser()?.id || null) !== renderedAccount) render(); } catch (error) { fatal(error); } } });
   } catch (error) { fatal(error); }
 })();

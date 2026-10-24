@@ -3,7 +3,7 @@
 body { margin: 0; }
 a { color: #125e48; text-underline-offset: .2em; }
 a:hover { color: #0a4232; }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button, .button { display: inline-block; border: 1px solid #146349; border-radius: .4rem; background: #146349; color: white; padding: .65rem 1rem; cursor: pointer; text-align: center; text-decoration: none; font-weight: 600; }
 button:hover, .button:hover { background: #0b4834; color: white; }
 button.secondary, .button.secondary { background: white; color: #174d3e; border-color: #a1b6ae; }
@@ -35,8 +35,14 @@ p { margin-top: 0; }
 .full { grid-column: 1 / -1; }
 .field { min-width: 0; }
 label, legend { display: block; font-weight: 600; margin-bottom: .4rem; }
-input:not([type="checkbox"]), select { width: 100%; padding: .6rem .7rem; min-height: 44px; border: 1px solid #9aada3; border-radius: .35rem; color: #182c28; background: white; }
-input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #a12525; }
+input:not([type="checkbox"]), select, textarea { width: 100%; padding: .6rem .7rem; min-height: 44px; border: 1px solid #9aada3; border-radius: .35rem; color: #182c28; background: white; }
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: #a12525; }
+textarea { resize: vertical; }
+.announcement, .helper-entry { border-top: 1px solid #d5e1db; margin-top: 1rem; padding-top: 1rem; overflow-wrap: anywhere; }
+.announcement-body, .helper-entry p { white-space: pre-wrap; }
+#helper-history { max-height: 26rem; overflow-y: auto; margin-top: 1rem; }
+#helper-suggestions { margin-bottom: 1rem; }
+#helper-suggestions button { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
 fieldset { border: 1px solid #cbd8d0; border-radius: .4rem; margin: 0; padding: 1rem; }
 legend { padding: 0 .3rem; }
 .days { display: flex; flex-wrap: wrap; gap: .7rem 1.2rem; }
@@ -72,6 +78,30 @@ details[open] > summary { margin-bottom: 1rem; }
 footer { text-align: center; padding: 1.5rem; color: #52665d; font-size: .85rem; border-top: 1px solid #dce5de; }
 .skip { position: absolute; top: -80px; left: 1rem; background: white; padding: .5rem; z-index: 10; }
 .skip:focus { top: .5rem; }
+.payslip { max-width: 850px; overflow-wrap: anywhere; }
+.payroll-breakdown { table-layout: fixed; margin: 1rem 0; }
+.payroll-breakdown th { font-weight: 500; }
+.payroll-breakdown thead th:first-child { width: 64%; }
+.payroll-breakdown td { text-align: right; font-variant-numeric: tabular-nums; max-width: none; }
+.payroll-breakdown tr:last-child { font-weight: 750; }
+@page { size: A4 portrait; margin: 14mm; }
+@media print {
+  :root { background: white; }
+  body[data-page="payslip"] { background: white; color: black; font-size: 10pt; line-height: 1.35; }
+  body[data-page="payslip"] > :not(main), body[data-page="payslip"] #content > :not(.payslip), body[data-page="payslip"] #fatal { display: none !important; }
+  body[data-page="payslip"] main { padding: 0; margin: 0; max-width: none; min-height: 0; }
+  .payslip { max-width: none; padding: 0; border: 0; margin: 0; box-shadow: none; }
+  .payslip h2, .payslip h3 { color: black; margin-bottom: 8pt; break-after: avoid; }
+  .payslip dl { display: grid; grid-template-columns: 110pt minmax(0, 1fr); gap: 3pt 10pt; }
+  .payslip dd { margin: 0; }
+  .payslip .notice { background: white; color: black; padding: 6pt; margin-bottom: 7pt; }
+  .payslip .help { color: black; font-size: 8.5pt; }
+  .payroll-breakdown { font-size: 10pt; }
+  .payroll-breakdown th, .payroll-breakdown td { padding: 5pt; color: black; }
+  .payroll-breakdown thead { display: table-header-group; }
+  .payroll-breakdown tr, .payslip .notice, .payslip dl { break-inside: avoid; }
+  .payroll-breakdown caption { break-after: avoid; }
+}
 @media (max-width: 680px) {
   .header-inner, .account-bar { padding: .8rem 1rem; }
   .header-inner { align-items: flex-start; flex-direction: column; gap: .65rem; }

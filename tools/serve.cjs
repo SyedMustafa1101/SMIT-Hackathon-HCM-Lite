@@ -4,7 +4,7 @@ const http = require('node:http');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const files = new Set(['index.html', 'pages/admin.html', 'pages/employees.html', 'pages/leaves.html', 'pages/settings.html', 'pages/employee.html', 'pages/payslip.html', 'css/style.css', 'js/storage.js', 'js/attendance.js', 'js/leaves.js', 'js/hcm.js', 'js/ui.js', 'js/pages.js']);
+const files = new Set(['index.html', 'pages/admin.html', 'pages/employees.html', 'pages/leaves.html', 'pages/settings.html', 'pages/employee.html', 'pages/payslip.html', 'css/style.css', 'js/storage.js', 'js/attendance.js', 'js/leaves.js', 'js/payroll.js', 'js/announcements.js', 'js/helper.js', 'js/hcm.js', 'js/ui.js', 'js/pages.js']);
 function createServer() {
   return http.createServer(async (request, response) => {
     let file;

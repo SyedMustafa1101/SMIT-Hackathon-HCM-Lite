@@ -56,7 +56,11 @@
       new Set(value.map(a => JSON.stringify([a.employeeId, a.date]))).size === value.length &&
       new Set(value.filter(a => a.checkOut === null).map(a => a.employeeId)).size === value.filter(a => a.checkOut === null).length;
     if (name === 'leaves') return Array.isArray(value) && value.every(validLeave) && new Set(value.map(l => l.id)).size === value.length;
-    return Array.isArray(value) && value.every(record);
+    if (name === 'announcements') return Array.isArray(value) && value.every(a => record(a) &&
+      Object.keys(a).length === 5 && ['id', 'title', 'body', 'authorId', 'createdAt'].every(k => Object.hasOwn(a, k)) &&
+      nonempty(a.id) && nonempty(a.title) && nonempty(a.body) && nonempty(a.authorId) && timestamp(a.createdAt)) &&
+      new Set(value.map(a => a.id)).size === value.length;
+    return false;
   }
   function create(adapter) {
     function raw(key) {
